@@ -317,18 +317,55 @@ function switchTab(tab) {
   }
 }
 
-// Login form submit handler (demo)
-function handleLogin(event) {
+// Login form submit handler 
+async function handleLogin(event) {
   event.preventDefault();
-  // Add real authentication here if needed
-  showToast('Login Successful', 'Welcome back, Driver!', 'success');
-  closeAccountModal();
+
+  const form = event.target;
+  const formData = new FormData(form);
+
+  try {
+    let response = await fetch("/login", {
+      method: "POST",
+      body: formData
+    });
+
+    let data = await response.json();
+    console.log("Response JSON:", data);
+
+    if (data.status === "success") {
+      window.location.href = "/driver"; 
+    } else {
+      document.getElementById("output").innerText = data.message;
+    }
+  } catch (err) {
+    console.error("Error:", err);
+  }
+}
+async function handleSignup(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const formData = new FormData(form);
+
+  try {
+    let response = await fetch("/signup", {
+      method: "POST",
+      body: formData
+    });
+
+    let data = await response.json();
+    console.log("Response JSON:", data);
+
+    if (data.status === "success") {
+      window.location.href = "/login"; 
+    } else {
+      document.getElementById("output").innerText = data.message;
+    }
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
-// Signup form submit handler (demo)
-function handleSignup(event) {
-  event.preventDefault();
-  // Add real signup integration here
-  showToast('Signup Successful', 'Driver account created. Please log in.', 'success');
-  switchTab('login');
-}
+
+

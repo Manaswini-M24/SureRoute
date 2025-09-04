@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SureRoute - Intelligent Bus Tracking & Real-Time Status</title>
+  <meta
+    name="description"
+    content="SureRoute provides real-time bus tracking, AI-powered predictions, and instant notifications for reliable public transportation. Track your bus, report delays, and stay informed."
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav-bar">
+    <div class="nav-container">
+      <div class="nav-content">
+        <a href="#" class="logo-link" onclick="showPage('landing')">
+          <svg
+            class="bus-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path
+              d="M8 6v6h8V6"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M16 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M4 12V8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v4"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M2 16h20"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="logo-text">SureRoute</span>
+        </a>
+
+        <div class="nav-buttons">
+          <button class="nav-btn" id="home-btn" onclick="showPage('landing')">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <path d="M12 2l3 7 7 0-5.5 4 2 7-6.5-5-6.5 5 2-7-5.5-4 7 0z" stroke-width="2" />
+            </svg>
+            Home
+          </button>
+          <button class="nav-btn" id="driver-btn" onclick="showPage('driver')">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2" />
+              <circle cx="9" cy="7" r="4" stroke-width="2" />
+              <polyline points="16,11 18,13 22,9" stroke-width="2" />
+            </svg>
+            Driver Portal
+          </button>
+          <button class="nav-btn" id="passenger-btn" onclick="showPage('passenger')">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="2" />
+              <circle cx="8.5" cy="7" r="4" stroke-width="2" />
+              <path d="m22 12-3-3 3-3" stroke-width="2" />
+              <path d="M16 12h6" stroke-width="2" />
+            </svg>
+            Passenger Portal
+          </button>
+
+          <!-- Driver Account Button -->
+          <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
+            Driver Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Landing Page -->
+  <div id="landing-page" class="page">
+    <main class="hero-section">
+      <div class="hero-container">
+        <div class="hero-content">
+          <div class="hero-text">
+            <h1 class="hero-title">
+              Smart Bus Tracking<br /><span class="accent-text">Real-Time Updates</span>
+            </h1>
+            <p class="hero-description">
+              Experience the future of public transportation with SureRoute's intelligent tracking system.
+              Get real-time updates, AI-powered predictions, and seamless communication between drivers and passengers.
+            </p>
+            <div class="hero-buttons">
+              <button class="btn-primary" onclick="showPage('passenger')">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="2" />
+                  <circle cx="8.5" cy="7" r="4" stroke-width="2" />
+                </svg>
+                Passenger Portal
+              </button>
+              <button class="btn-secondary" onclick="showPage('driver')">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2" />
+                  <circle cx="9" cy="7" r="4" stroke-width="2" />
+                  <polyline points="16,11 18,13 22,9" stroke-width="2" />
+                </svg>
+                Driver Portal
+              </button>
+            </div>
+          </div>
+          <div class="hero-image">
+            <img
+              src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&h=400&fit=crop"
+              alt="Modern Bus"
+              class="hero-img"
+            />
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- About Section -->
+    <section class="about-section">
+      <div class="about-container">
+        <h2 class="section-title">About SureRoute</h2>
+        <p class="section-description">
+          SureRoute is an <strong>AI-powered intelligent transport system</strong> designed to make public transportation more reliable, safe, and efficient.
+          Whether you’re a passenger or a driver, SureRoute helps you save time, stay connected, and always be informed about your journey.
+        </p>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="features-container">
+        <h2 class="section-title">Key Features</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="2" />
+              <polyline points="12,6 12,12 16,14" stroke-width="2" />
+            </svg>
+            <h3>Real-Time Tracking</h3>
+            <p>Track bus movement live with instant ETA updates for every stop.</p>
+          </div>
+
+          <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 3v9l6 3" stroke-width="2" />
+              <circle cx="12" cy="12" r="10" stroke-width="2" />
+            </svg>
+            <h3>AI-Powered Predictions</h3>
+            <p>Get accurate arrival predictions using AI models and traffic data.</p>
+          </div>
+
+          <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 4h16v16H4z" stroke-width="2" />
+              <path d="M4 9h16M9 4v16" stroke-width="2" />
+            </svg>
+            <h3>Passenger Alerts</h3>
+            <p>Receive live delay/missed bus notifications instantly on your device.</p>
+          </div>
+
+          <div class="feature-card">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="2" />
+              <circle cx="8.5" cy="7" r="4" stroke-width="2" />
+            </svg>
+            <h3>Driver Tools</h3>
+            <p>Simple driver portal with one-tap arrival and departure updates.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Driver Portal -->
+  <div id="driver-page" class="page hidden">
+    <main class="portal-main">
+      <div class="portal-container">
+        <h1 class="portal-title">Driver Portal</h1>
+        <!-- Status Display -->
+        <div class="status-card">
+          <div class="status-header">
+            <h2>Route Status</h2>
+            <div class="live-indicator">
+              <span class="live-dot"></span>
+              <span class="live-text">LIVE</span>
+            </div>
+          </div>
+          <div class="status-badge" id="driver-status">
+            <svg
+              class="status-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <path
+                d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                stroke-width="2"
+              />
+              <path d="m9 12 2 2 4-4" stroke-width="2" />
+            </svg>
+            <span>On Time</span>
+          </div>
+          <p class="status-time">
+            Last updated: <span id="driver-last-updated">Just now</span>
+          </p>
+        </div>
+        <!-- Action Buttons -->
+        <div class="action-section">
+          <h3>Quick Actions</h3>
+          <div class="action-buttons">
+            <button class="action-btn success" onclick="updateDriverStatus('arrived')">
+              <svg
+                class="action-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2" />
+                <circle cx="12" cy="10" r="3" stroke-width="2" />
+              </svg>
+              ARRIVED
+            </button>
+            <button class="action-btn primary" onclick="updateDriverStatus('departed')">
+              <svg
+                class="action-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M8 3l4 8 5-8h5l-9 10v8l-4-3-4 3v-8l-9-10h5z" stroke-width="2" />
+              </svg>
+              DEPARTED
+            </button>
+          </div>
+        </div>
+        <!-- Activity Log -->
+        <div class="activity-card">
+          <h3>Recent Activity</h3>
+          <div class="activity-log" id="activity-log">
+            <div class="activity-item">
+              <span class="activity-time">Just now</span>
+              <span class="activity-text">Route started</span>
+              <span class="activity-type driver">Driver</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Passenger Portal -->
+  <div id="passenger-page" class="page hidden">
+    <main class="portal-main">
+      <div class="portal-container">
+        <h1 class="portal-title">Passenger Portal</h1>
+        <!-- Bus Status -->
+        <div class="status-card">
+          <div class="status-header">
+            <h2>Bus Status</h2>
+            <div class="live-indicator">
+              <span class="live-dot"></span>
+              <span class="live-text">LIVE</span>
+            </div>
+          </div>
+          <div class="status-badge" id="passenger-status">
+            <svg
+              class="status-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <path
+                d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                stroke-width="2"
+              />
+              <path d="m9 12 2 2 4-4" stroke-width="2" />
+            </svg>
+            <span>On Time</span>
+          </div>
+          <p class="eta">ETA: <span id="passenger-eta">5 minutes</span></p>
+          <p class="status-time">
+            Last updated: <span id="passenger-last-updated">Just now</span>
+          </p>
+        </div>
+        <!-- Report Buttons -->
+        <div class="action-section">
+          <h3>Report Issue</h3>
+          <div class="action-buttons">
+            <button class="action-btn warning" onclick="reportIssue('delay')">
+              <svg
+                class="action-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                  stroke-width="2"
+                />
+                <path d="M12 9v4" stroke-width="2" />
+                <path d="m12 17 .01 0" stroke-width="2" />
+              </svg>
+              REPORT DELAY
+            </button>
+            <button class="action-btn destructive" onclick="reportIssue('missed')">
+              <svg
+                class="action-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M3 6h18l-2 13H5L3 6Z" stroke-width="2" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-width="2" />
+                <path d="m10 11 4 4" stroke-width="2" />
+                <path d="m14 11-4 4" stroke-width="2" />
+              </svg>
+              MISSED BUS
+            </button>
+          </div>
+        </div>
+        <!-- Notifications -->
+        <div class="notifications-card">
+          <h3>Recent Notifications</h3>
+          <div class="notifications-list" id="notifications-list">
+            <div class="notification-item">
+              <span class="notification-time">Just now</span>
+              <span class="notification-text">Bus tracking started</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Driver Account Modal -->
+  <div id="account-modal" class="modal hidden">
+    <div class="modal-content account-modal-content">
+      <div class="modal-tabs">
+        <button id="tab-login" class="tab active" onclick="switchTab('login')">Login</button>
+        <button id="tab-signup" class="tab" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+      <form id="login-form" class="account-form active" onsubmit="handleLogin(event)">
+        <input type="text" class="modal-input" placeholder="Username or Email" required />
+        <input type="password" class="modal-input" placeholder="Password" required />
+        <button type="submit" class="btn-primary modal-btn">Log In</button>
+      </form>
+      <form id="signup-form" class="account-form" onsubmit="handleSignup(event)">
+        <input type="text" class="modal-input" placeholder="Full Name" required />
+        <input type="email" class="modal-input" placeholder="Email" required />
+        <input type="password" class="modal-input" placeholder="Password" required />
+        <input type="text" class="modal-input" placeholder="Bus Name" required />
+        <input type="text" class="modal-input" placeholder="Bus Number" required />
+        <input type="text" class="modal-input" placeholder="Bus Route" required />
+        <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" required />
+        <button type="submit" class="btn-primary modal-btn">Sign Up</button>
+      </form>
+      <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

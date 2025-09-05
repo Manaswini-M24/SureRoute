@@ -8,14 +8,15 @@
     name="description"
     content="SureRoute provides real-time bus tracking, AI-powered predictions, and instant notifications for reliable public transportation. Track your bus, report delays, and stay informed."
   />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="{{url_for('static',filename='style.css')}}" />
+  <script src="{{url_for('static', filename='script.js')}}"></script>
 </head>
 <body>
   <!-- Navigation -->
   <nav class="nav-bar">
     <div class="nav-container">
       <div class="nav-content">
-        <a href="#" class="logo-link" onclick="showPage('landing')">
+        <a href="/" class="logo-link" onclick="showPage('landing')">
           <svg
             class="bus-icon"
             viewBox="0 0 24 24"
@@ -51,7 +52,7 @@
         </a>
 
         <div class="nav-buttons">
-          <button class="nav-btn" id="home-btn" onclick="showPage('landing')">
+          <a class="nav-btn" id="home-btn" href='{{url_for("home")}}'>
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -61,8 +62,8 @@
               <path d="M12 2l3 7 7 0-5.5 4 2 7-6.5-5-6.5 5 2-7-5.5-4 7 0z" stroke-width="2" />
             </svg>
             Home
-          </button>
-          <button class="nav-btn" id="driver-btn" onclick="showPage('driver')">
+          </a>
+          <a class="nav-btn" id="driver-btn" href="{{url_for('driver')}}">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -74,8 +75,8 @@
               <polyline points="16,11 18,13 22,9" stroke-width="2" />
             </svg>
             Driver Portal
-          </button>
-          <button class="nav-btn" id="passenger-btn" onclick="showPage('passenger')">
+          </a>
+          <a class="nav-btn" id="passenger-btn" href="{{url_for('passenger')}}">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -88,7 +89,7 @@
               <path d="M16 12h6" stroke-width="2" />
             </svg>
             Passenger Portal
-          </button>
+          </a>
 
           <!-- Driver Account Button -->
           <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
@@ -113,21 +114,21 @@
               Get real-time updates, AI-powered predictions, and seamless communication between drivers and passengers.
             </p>
             <div class="hero-buttons">
-              <button class="btn-primary" onclick="showPage('passenger')">
+              <a class="btn-primary" href="{{url_for('passenger')}}">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="2" />
                   <circle cx="8.5" cy="7" r="4" stroke-width="2" />
                 </svg>
                 Passenger Portal
-              </button>
-              <button class="btn-secondary" onclick="showPage('driver')">
+              </a>
+              <a class="btn-secondary" href="{{url_for('driver')}}">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2" />
                   <circle cx="9" cy="7" r="4" stroke-width="2" />
                   <polyline points="16,11 18,13 22,9" stroke-width="2" />
                 </svg>
                 Driver Portal
-              </button>
+              </a>
             </div>
           </div>
           <div class="hero-image">
@@ -368,25 +369,32 @@
         <button id="tab-login" class="tab active" onclick="switchTab('login')">Login</button>
         <button id="tab-signup" class="tab" onclick="switchTab('signup')">Sign Up</button>
       </div>
-      <form id="login-form" class="account-form active" onsubmit="handleLogin(event)">
-        <input type="text" class="modal-input" placeholder="Username or Email" required />
-        <input type="password" class="modal-input" placeholder="Password" required />
+      <form id="login-form" class="account-form active" >
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
+        <input type="password" class="modal-input" placeholder="Password" name="password" required />
         <button type="submit" class="btn-primary modal-btn">Log In</button>
       </form>
-      <form id="signup-form" class="account-form" onsubmit="handleSignup(event)">
-        <input type="text" class="modal-input" placeholder="Full Name" required />
-        <input type="email" class="modal-input" placeholder="Email" required />
-        <input type="password" class="modal-input" placeholder="Password" required />
-        <input type="text" class="modal-input" placeholder="Bus Name" required />
-        <input type="text" class="modal-input" placeholder="Bus Number" required />
-        <input type="text" class="modal-input" placeholder="Bus Route" required />
-        <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" required />
+      <div id="login-output" style="margin-top:20px; color:blue;"></div>
+
+      <form id="signup-form" class="account-form" >
+        <input type="text" class="modal-input" placeholder="Full Name" required name="full_name"/>
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
+        <input type="password" class="modal-input" placeholder="Password" name="password" required />
+        <input type="text" class="modal-input" placeholder="Bus Name" name="bus_name" required />
+        <input type="text" class="modal-input" placeholder="Bus Number" name="bus_number" required />
+        <input type="text" class="modal-input" placeholder="Bus Route" name="bus_route" required />
+        <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" name="bus_timings" required />
         <button type="submit" class="btn-primary modal-btn">Sign Up</button>
       </form>
+      <div id="signup-output" style="margin-top:20px; color:blue;"></div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
       <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+ 
 </body>
 </html>

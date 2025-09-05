@@ -317,18 +317,79 @@ function switchTab(tab) {
   }
 }
 
-// Login form submit handler (demo)
-function handleLogin(event) {
+document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  // Add real authentication here if needed
-  showToast('Login Successful', 'Welcome back, Driver!', 'success');
-  closeAccountModal();
-}
 
-// Signup form submit handler (demo)
-function handleSignup(event) {
+  const form = event.target;
+  const email = form.email.value;
+  const password = form.password.value;
+
+  try {
+    // 🔹 Firebase Auth sign in
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    // Optionally get ID token if you want to call Flask securely
+    const idToken = await user.getIdToken();
+
+    // Example: send token to Flask if needed
+    /*
+    let response = await fetch("/protected", {
+      method: "GET",
+      headers: { "Authorization": idToken }
+    });
+    */
+
+    // Redirect to driver page
+    window.location.href = "/driver";
+  } catch (error) {
+    document.getElementById("login-output").innerText = error.message;
+  }
+});
+
+// ✅ Your Firebase Config
+const firebaseConfig = {
+  apiKey: "YOUR-API-KEY",
+  authDomain: "your-app.firebaseapp.com",
+  projectId: "your-project-id",
+};
+
+// ✅ Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ✅ Handle signup
+document.getElementById("signup-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  // Add real signup integration here
-  showToast('Signup Successful', 'Driver account created. Please log in.', 'success');
-  switchTab('login');
-}
+
+  const form = event.target;
+  const full_name = form.full_name.value;
+  const email = form.email.value;
+  const password = form.password.value;
+  const bus_name = form.bus_name.value;
+  const bus_number = form.bus_number.value;
+  const bus_route = form.bus_route.value;
+  const bus_timings = form.bus_timings.value;
+
+  try {
+    // 1. Create Firebase Auth user
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    // 2. Save driver info in Firestore
+    await db.collection("drivers").doc(user.uid).set({
+      full_name,
+      email,
+      bus_name,
+      bus_number,
+      bus_route,
+      bus_timings,
+    });
+
+    // 3. Redirect to login
+    window.location.href = "/login";
+  } catch (error) {
+    document.getElementById("signup-output").innerText = error.message;
+  }
+});

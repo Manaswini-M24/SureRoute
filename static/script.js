@@ -317,55 +317,79 @@ function switchTab(tab) {
   }
 }
 
-// Login form submit handler 
-async function handleLogin(event) {
+document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const form = event.target;
-  const formData = new FormData(form);
+  const email = form.email.value;
+  const password = form.password.value;
 
   try {
-    let response = await fetch("/login", {
-      method: "POST",
-      body: formData
+    // 🔹 Firebase Auth sign in
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    // Optionally get ID token if you want to call Flask securely
+    const idToken = await user.getIdToken();
+
+    // Example: send token to Flask if needed
+    /*
+    let response = await fetch("/protected", {
+      method: "GET",
+      headers: { "Authorization": idToken }
     });
+    */
 
-    let data = await response.json();
-    console.log("Response JSON:", data);
-
-    if (data.status === "success") {
-      window.location.href = "/driver"; 
-    } else {
-      document.getElementById("output").innerText = data.message;
-    }
-  } catch (err) {
-    console.error("Error:", err);
+    // Redirect to driver page
+    window.location.href = "/driver";
+  } catch (error) {
+    document.getElementById("login-output").innerText = error.message;
   }
-}
-async function handleSignup(event) {
+});
+
+// ✅ Your Firebase Config
+const firebaseConfig = {
+  apiKey: "YOUR-API-KEY",
+  authDomain: "your-app.firebaseapp.com",
+  projectId: "your-project-id",
+};
+
+// ✅ Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ✅ Handle signup
+document.getElementById("signup-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const form = event.target;
-  const formData = new FormData(form);
+  const full_name = form.full_name.value;
+  const email = form.email.value;
+  const password = form.password.value;
+  const bus_name = form.bus_name.value;
+  const bus_number = form.bus_number.value;
+  const bus_route = form.bus_route.value;
+  const bus_timings = form.bus_timings.value;
 
   try {
-    let response = await fetch("/signup", {
-      method: "POST",
-      body: formData
+    // 1. Create Firebase Auth user
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    // 2. Save driver info in Firestore
+    await db.collection("drivers").doc(user.uid).set({
+      full_name,
+      email,
+      bus_name,
+      bus_number,
+      bus_route,
+      bus_timings,
     });
 
-    let data = await response.json();
-    console.log("Response JSON:", data);
-
-    if (data.status === "success") {
-      window.location.href = "/login"; 
-    } else {
-      document.getElementById("output").innerText = data.message;
-    }
-  } catch (err) {
-    console.error("Error:", err);
+    // 3. Redirect to login
+    window.location.href = "/login";
+  } catch (error) {
+    document.getElementById("signup-output").innerText = error.message;
   }
-}
-
-
-
+});

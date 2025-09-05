@@ -369,14 +369,14 @@
         <button id="tab-login" class="tab active" onclick="switchTab('login')">Login</button>
         <button id="tab-signup" class="tab" onclick="switchTab('signup')">Sign Up</button>
       </div>
-      <form id="login-form" class="account-form active" action="/login" onsubmit="handleLogin(event)">
-        <input type="text" class="modal-input" placeholder="Username" name="username" required />
+      <form id="login-form" class="account-form active" >
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
         <input type="password" class="modal-input" placeholder="Password" name="password" required />
         <button type="submit" class="btn-primary modal-btn">Log In</button>
       </form>
-      <div id="output" style="margin-top:20px; color:blue;"></div>
+      <div id="login-output" style="margin-top:20px; color:blue;"></div>
 
-      <form id="signup-form" class="account-form" action="/signup" onsubmit="handleSignup(event)">
+      <form id="signup-form" class="account-form" >
         <input type="text" class="modal-input" placeholder="Full Name" required name="full_name"/>
         <input type="email" class="modal-input" placeholder="Email" name="email" required />
         <input type="password" class="modal-input" placeholder="Password" name="password" required />
@@ -386,7 +386,11 @@
         <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" name="bus_timings" required />
         <button type="submit" class="btn-primary modal-btn">Sign Up</button>
       </form>
-      <div id="output" style="margin-top:20px; color:blue;"></div>
+      <div id="signup-output" style="margin-top:20px; color:blue;"></div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
       <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
     </div>
   </div>

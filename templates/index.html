@@ -8,8 +8,7 @@
     name="description"
     content="SureRoute provides real-time bus tracking, AI-powered predictions, and instant notifications for reliable public transportation. Track your bus, report delays, and stay informed."
   />
-  <link rel="stylesheet" href="{{url_for('static',filename='style.css')}}" />
-  <script src="{{url_for('static', filename='script.js')}}"></script>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <!-- Navigation -->
@@ -387,14 +386,16 @@
         <button type="submit" class="btn-primary modal-btn">Sign Up</button>
       </form>
       <div id="signup-output" style="margin-top:20px; color:blue;"></div>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
       <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
     </div>
   </div>
 
- 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="/static/firebase.js"></script>
+<script src="/static/script.js"></script>
+
 </body>
 </html>

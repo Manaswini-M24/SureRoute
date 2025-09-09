@@ -1,0 +1,63 @@
+[
+  {
+    "route_no": "1",
+    "source": "State Bank",
+    "destination": "Kunjathbail",
+    "frequency_minutes": 60,
+    "via": ["Carstreet", "Urwa"],
+    "stops": [
+      { "name": "State Bank", "arrival": "08:00", "departure": "08:05" },
+      { "name": "Carstreet", "arrival": "08:15", "departure": "08:17" },
+      { "name": "Urwa", "arrival": "08:30", "departure": "08:32" },
+      { "name": "Kunjathbail", "arrival": "09:00", "departure": null }
+    ]
+  },
+  {
+    "route_no": "2",
+    "source": "State Bank",
+    "destination": "Panambur",
+    "frequency_minutes": 60,
+    "via": ["Baikampady"],
+    "stops": [
+      { "name": "State Bank", "arrival": "09:00", "departure": "09:05" },
+      { "name": "Baikampady", "arrival": "09:30", "departure": "09:32" },
+      { "name": "Panambur", "arrival": "10:00", "departure": null }
+    ]
+  },
+  {
+    "route_no": "3",
+    "source": "State Bank",
+    "destination": "Derlakatte",
+    "frequency_minutes": 60,
+    "via": ["Hampankatta"],
+    "stops": [
+      { "name": "State Bank", "arrival": "07:30", "departure": "07:35" },
+      { "name": "Hampankatta", "arrival": "07:50", "departure": "07:52" },
+      { "name": "Derlakatte", "arrival": "08:30", "departure": null }
+    ]
+  },
+  {
+    "route_no": "4",
+    "source": "State Bank",
+    "destination": "Surathkal",
+    "frequency_minutes": 60,
+    "via": ["Baikampady"],
+    "stops": [
+      { "name": "State Bank", "arrival": "06:00", "departure": "06:05" },
+      { "name": "Baikampady", "arrival": "06:40", "departure": "06:42" },
+      { "name": "Surathkal", "arrival": "07:10", "departure": null }
+    ]
+  },
+  {
+    "route_no": "5",
+    "source": "State Bank",
+    "destination": "Katipalla",
+    "frequency_minutes": 60,
+    "via": ["Panambur"],
+    "stops": [
+      { "name": "State Bank", "arrival": "10:00", "departure": "10:05" },
+      { "name": "Panambur", "arrival": "10:45", "departure": "10:47" },
+      { "name": "Katipalla", "arrival": "11:15", "departure": null }
+    ]
+  }
+]

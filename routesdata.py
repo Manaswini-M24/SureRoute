@@ -8,7 +8,7 @@ import os
 
 # ---- CONFIG ----
 FIREBASE_KEY_FILE = "serviceAccountKey.json"   # Firebase private key
-ROUTES_JSON_FILE = "withstop_datafile.json"               # Your routes JSON
+ROUTES_JSON_FILE = "routes.json"               # Your routes JSON
 ORS_API_KEY = os.getenv("ORS_API_KEY") 
 
 

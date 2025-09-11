@@ -1,6 +1,6 @@
 
  
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  // import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -15,4 +15,7 @@
   };
 
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+  // const app = initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();

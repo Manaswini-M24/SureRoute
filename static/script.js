@@ -317,36 +317,77 @@ function switchTab(tab) {
   }
 }
 
+// ✅ Login
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-
   const form = event.target;
   const email = form.email.value;
   const password = form.password.value;
 
   try {
-    // 🔹 Firebase Auth sign in
-    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
     const user = userCredential.user;
 
-    // Optionally get ID token if you want to call Flask securely
+    // Get Firebase ID token (to send to Flask later if needed)
     const idToken = await user.getIdToken();
 
-    // Example: send token to Flask if needed
-    /*
-    let response = await fetch("/protected", {
-      method: "GET",
-      headers: { "Authorization": idToken }
-    });
-    */
+    // Example: send token to Flask protected route
+    // await fetch("/protected", { headers: { Authorization: idToken } });
 
-    // Redirect to driver page
     window.location.href = "/driver";
   } catch (error) {
-    document.getElementById("login-output").innerText = error.message;
+    console.log("Firebase error:", error); // For debugging
+    
+    let message = "Login failed!";
+    
+    // Check if error.message contains JSON (REST API error format)
+    if (typeof error.message === 'string' && error.message.includes('"error"')) {
+      try {
+        const errorObj = JSON.parse(error.message);
+        const errorCode = errorObj.error?.message;
+        
+        if (errorCode === "INVALID_LOGIN_CREDENTIALS") {
+          message = "Invalid email or password.";
+        } else if (errorCode === "EMAIL_NOT_FOUND") {
+          message = "No account found with this email.";
+        } else if (errorCode === "INVALID_PASSWORD") {
+          message = "Incorrect password.";
+        } else if (errorCode === "INVALID_EMAIL") {
+          message = "Invalid email format.";
+        } else if (errorCode === "TOO_MANY_ATTEMPTS_TRY_LATER") {
+          message = "Too many failed attempts. Please try again later.";
+        } else if (errorCode === "USER_DISABLED") {
+          message = "This account has been disabled.";
+        } else {
+          message = `Login failed: ${errorCode || 'Unknown error'}`;
+        }
+      } catch (parseError) {
+        message = "Login failed: Invalid credentials.";
+      }
+    } 
+    // Handle standard Firebase SDK error codes
+    else if (error.code === "auth/user-not-found") {
+      message = "No account found with this email.";
+    } else if (error.code === "auth/wrong-password") {
+      message = "Incorrect password.";
+    } else if (error.code === "auth/invalid-email") {
+      message = "Invalid email format.";
+    } else if (error.code === "auth/invalid-credential" || error.code === "auth/invalid-login-credentials") {
+      message = "Invalid email or password.";
+    } else if (error.code === "auth/too-many-requests") {
+      message = "Too many failed attempts. Please try again later.";
+    } else if (error.code === "auth/user-disabled") {
+      message = "This account has been disabled.";
+    } else {
+      // For debugging - you can remove this in production
+      message = `Login failed: ${error.message}`;
+    }
+
+    document.getElementById("login-output").innerText = message;
   }
 });
 
+HEAD
 // ✅ Your Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCwhbI3PxOT6xN-KejyiuC2GrpBhkmEC8o",
@@ -363,10 +404,12 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ✅ Handle signup
+// ✅ Signup
+ origin/main
 document.getElementById("signup-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-
   const form = event.target;
+  
   const full_name = form.full_name.value;
   const email = form.email.value;
   const password = form.password.value;
@@ -374,13 +417,11 @@ document.getElementById("signup-form").addEventListener("submit", async (event) 
   const bus_number = form.bus_number.value;
   const bus_route = form.bus_route.value;
   const bus_timings = form.bus_timings.value;
-
+  
   try {
-    // 1. Create Firebase Auth user
+    console.log("Creating user account...");
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-
-    // 2. Save driver info in Firestore
+    const user = userCredential.user;  
     await db.collection("drivers").doc(user.uid).set({
       full_name,
       email,
@@ -389,10 +430,20 @@ document.getElementById("signup-form").addEventListener("submit", async (event) 
       bus_route,
       bus_timings,
     });
-
-    // 3. Redirect to login
-    window.location.href = "/login";
+    console.log("Data saved successfully");
+    
+  
+    switchTab('login');
+    document.getElementById("login-output").innerText = "Signup successful! Please login.";
+    
   } catch (error) {
-    document.getElementById("signup-output").innerText = error.message;
+    console.error("Full error:", error);
+    let message = "Signup failed!";
+    if (error.code === "auth/email-already-in-use") message = "Email is already registered.";
+    else if (error.code === "auth/invalid-email") message = "Invalid email format.";
+    else if (error.code === "auth/weak-password") message = "Password should be at least 6 characters.";
+    else message = error.message;
+    
+    document.getElementById("signup-output").innerText = message;
   }
 });

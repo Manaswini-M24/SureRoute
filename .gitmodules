@@ -1,0 +1,3 @@
+[submodule "ai_services/sureroute-eta-predictor"]
+	path = ai_services/sureroute-eta-predictor
+	url = https://huggingface.co/spaces/Megha-277/sureroute-eta-predictor

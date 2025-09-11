@@ -387,7 +387,25 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
   }
 });
 
+HEAD
+// ✅ Your Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyCwhbI3PxOT6xN-KejyiuC2GrpBhkmEC8o",
+    authDomain: "driver-login-portal.firebaseapp.com",
+    projectId: "driver-login-portal",
+     storageBucket: "driver-login-portal.appspot.com",
+    messagingSenderId: "54907190318",
+    appId: "1:54907190318:web:5c063f644c1e6fa876b3bf"
+  };
+
+// ✅ Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ✅ Handle signup
 // ✅ Signup
+ origin/main
 document.getElementById("signup-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.target;

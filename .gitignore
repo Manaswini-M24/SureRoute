@@ -22,6 +22,6 @@ dist/
 # Firebase
 .firebase/
 firebase-debug.log
+
 serviceAccountKey.json
-serviceAccountKey.json
-serviceAccountKey.json
+

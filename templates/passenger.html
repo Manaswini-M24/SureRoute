@@ -1,11 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SureRoute - Passenger Portal</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    Hiiiiii
+  <!-- Navigation -->
+  <nav class="nav-bar">
+    <div class="nav-container">
+      <div class="nav-content">
+        <a href="passenger.html" class="logo-link">
+          <svg
+            class="bus-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path d="M8 6v6h8V6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M16 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M4 12V8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v4"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M2 16h20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="logo-text">SureRoute</span>
+        </a>
+
+        <div class="nav-buttons">
+          <a href="index.html" class="nav-btn">Home</a>
+        <a href="driver.html" class="nav-btn">Driver Portal</a>
+        <a href="passenger.html" class="nav-btn active">Passenger Portal</a>
+          
+          <!-- Driver Account Button -->
+          <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
+            Driver Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Passenger Portal -->
+  <div id="passenger-page" class="page">
+    <main class="portal-main">
+      <div class="portal-container">
+        <h1 class="portal-title">Passenger Portal</h1>
+
+        <!-- Options Page -->
+        <div id="passenger-options-page" class="passenger-subpage">
+          <button class="btn-option" onclick="showPassengerSubPage('findBus')">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="2"/>
+              <path d="M8 12h8M12 8v8" stroke-width="2"/>
+            </svg>
+            Find My Bus
+          </button>
+          <button class="btn-option" onclick="showPassengerSubPage('report')">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M9 12l2 2 4-4" stroke-width="2"/>
+              <circle cx="12" cy="12" r="10" stroke-width="2"/>
+            </svg>
+            Report
+          </button>
+        </div>
+
+        <!-- Find My Bus Page -->
+        <div id="find-bus-page" class="passenger-subpage hidden">
+          <button onclick="showPassengerSubPage('options')" class="btn-secondary">Back</button>
+          <h2>Find My Bus</h2>
+          
+          <!-- Location-based search section -->
+          <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 2rem;">
+            <h3 style="color: var(--primary); margin-bottom: 1rem; text-align: center;">
+              📍 Don't know your exact location?
+            </h3>
+            <p style="color: var(--muted-foreground); text-align: center; margin-bottom: 1.5rem; line-height: 1.6;">
+              Let us find nearby bus stops for you based on your current location
+            </p>
+            <div style="text-align: center;">
+              <button class="btn-primary" onclick="useMyLocation()" style="background: var(--success); gap: 0.75rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 1.25rem; height: 1.25rem;">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+                  <circle cx="12" cy="10" r="3" stroke-width="2"/>
+                </svg>
+                Use My Location
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual search section -->
+          <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;">
+            <h3 style="color: var(--primary); margin-bottom: 1rem; text-align: center;">
+              🔍 Or search manually
+            </h3>
+            
+            <label for="find-route-select">Select Route:</label>
+            <select id="find-route-select" class="modal-input" onchange="populateFindStops()">
+              <option value="">--Choose Route--</option>
+              <option value="Route 1">Route 1</option>
+              <option value="Route 2">Route 2</option>
+              <option value="Route 3">Route 3</option>
+            </select>
+
+            <label for="find-stop-select">Select Stop:</label>
+            <select id="find-stop-select" class="modal-input">
+              <option value="">--Choose Stop--</option>
+            </select>
+
+            <button class="btn-primary" style="margin-top:1rem; width: 100%;" onclick="findMyBus()">
+              Find My Bus
+            </button>
+          </div>
+
+          <!-- Results section -->
+          <div id="bus-list" style="margin-top:1.5rem;"></div>
+          <p style="margin-top:1rem; font-style: italic; color: var(--muted-foreground); text-align: center;">
+            🤖 AI Prediction: (to be added)
+          </p>
+        </div>
+
+        <!-- Report Page -->
+        <div id="report-page" class="passenger-subpage hidden">
+          <button onclick="showPassengerSubPage('options')" class="btn-secondary">Back</button>
+          <h2>Report</h2>
+          <label for="report-route-select">Select Route:</label>
+          <select id="report-route-select" class="modal-input" onchange="populateReportStops()">
+            <option value="">--Choose Route--</option>
+            <option value="Route 1">Route 1</option>
+            <option value="Route 2">Route 2</option>
+            <option value="Route 3">Route 3</option>
+          </select>
+
+          <label for="report-stop-select">Select Stop:</label>
+          <select id="report-stop-select" class="modal-input" onchange="populateBusNames()">
+            <option value="">--Choose Stop--</option>
+            <option value="Stop 1">Stop 1</option>
+            <option value="Stop 2">Stop 2</option>
+            <option value="Stop 3">Stop 3</option>
+          </select>
+
+          <label for="bus-name-select">Bus Name:</label>
+          <select id="bus-name-select" class="modal-input">
+            <option value="">--Choose Bus--</option>
+            <option value="Bus 1">Bus 1</option>
+            <option value="Bus 2">Bus 2</option>
+            <option value="Bus 3">Bus 3</option>
+          </select>
+
+          <label>Status:</label>
+          <div class="status-radio-group">
+            <input type="radio" id="status-on-time" name="status-report" value="On Time" checked />
+            <label for="status-on-time">On Time</label>
+
+            <input type="radio" id="status-delay" name="status-report" value="Delay" />
+            <label for="status-delay">Delay</label>
+          </div>
+          <div class="submit-button-container">
+            <button class="btn-primary" onclick="submitReport()">Submit Report</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

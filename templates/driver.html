@@ -1,11 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SureRoute - Driver Portal</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style1.css" />
 </head>
 <body>
-    Hello world
+  <!-- Navigation -->
+  <nav class="nav-bar">
+    <div class="nav-container">
+      <div class="nav-content">
+        <a href="driver.html" class="logo-link">
+          <svg
+            class="bus-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path d="M8 6v6h8V6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M16 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 14a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M4 12V8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v4"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M2 16h20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="logo-text">SureRoute</span>
+        </a>
+
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">Home</a>
+        <a href="driver.html" class="nav-btn active">Driver Portal</a>
+        <a href="passenger.html" class="nav-btn">Passenger Portal</a>
+
+          <!-- Driver Account Button -->
+          <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
+            Driver Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Driver Portal -->
+  <div id="driver-page" class="page">
+    <div id="driver-portal" style="max-width: 600px; margin: auto; padding: 1rem; font-family: Arial, sans-serif; background-color: var(--card); color: var(--foreground); border-radius: var(--radius);">
+      <!-- Trip Selection -->
+      <section id="driver-trip-selection">
+        <h2>Your Assigned Trips Today</h2>
+        <ul id="driver-trip-list" style="list-style: none; padding: 0;"></ul>
+      </section>
+      
+      <!-- Live Trip View -->
+      <section id="driver-live-trip" class="hidden">
+        <!-- Back Button -->
+        <button onclick="showDriverTripSelection()" class="btn-secondary" style="margin-bottom: 1rem;">
+          ← Back
+        </button>
+        <h2>Live Trip</h2>
+        <p><strong>Bus ID:</strong> <span id="driver-bus-id"></span></p>
+        <p><strong>Bus Name:</strong> <span id="driver-bus-name"></span></p>
+        <p><strong>Route ID:</strong> <span id="driver-route-id"></span></p>
+
+        <h3>Stops</h3>
+        <ul id="driver-stops-list" style="list-style: none; padding: 0;"></ul>
+
+        <div style="margin-top: 1.5rem;">
+          <button id="departed-btn" style="width: 100%; font-size: 1.5rem; padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">Mark Departed</button>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">Delay Status</label>
+          <select id="delay-reason-select" style="width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;">
+            <option value="">Select reason for delay</option>
+            <option value="Traffic Jam">Traffic Jam</option>
+            <option value="Mechanical Issue">Mechanical Issue</option>
+            <option value="Weather Conditions">Weather Conditions</option>
+            <option value="Passenger Delay">Passenger Delay</option>
+            <option value="Road Construction">Road Construction</option>
+            <option value="Other">Other</option>
+          </select>
+          <button id="delay-flag-btn" style="margin-top: 1rem; width: 100%; font-size: 1.25rem; padding: 0.75rem; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer;">Flag Delay</button>
+        </div>
+
+        <p id="delay-message" style="margin-top: 1rem; font-weight: bold; color: #f44336;"></p>
+      </section>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="script1.js"></script>
 </body>
 </html>

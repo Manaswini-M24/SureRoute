@@ -222,7 +222,11 @@
         <input type="password" class="modal-input" placeholder="Password" name="password" required />
         <input type="text" class="modal-input" placeholder="Bus Name" name="bus_name" required />
         <input type="text" class="modal-input" placeholder="Bus Number" name="bus_number" required />
-        <input type="text" class="modal-input" placeholder="Bus Route" name="bus_route" required />
+        <label for="bus_route">Bus Route:</label>
+<select id="bus_route" name="bus_route" class="modal-input" required>
+  <option value="">--Select Route--</option>
+</select>
+
         <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" name="bus_timings" required />
         <button type="submit" class="btn-primary modal-btn">Sign Up</button>
       </form>

@@ -48,7 +48,10 @@ function initApp() {
 
   // Load routes when page loads
   loadRoutes();
-
+  loadReportRoutes();
+  renderDriverStops();
+  event.preventDefault();
+  loadSignupRoutes();
   // Add other new functions if needed
   // renderLandingPage();
   // setupEventListeners();
@@ -92,189 +95,6 @@ function switchTab(tab) {
 }
 
 // ✅ Login
-// // LOGIN FORM CODE (login.js or in your login page)
-// document.getElementById("login-form").addEventListener("submit", async (event) => {
-//   event.preventDefault();
-//   const form = event.target;
-//   const email = form.email.value;
-//   const password = form.password.value;
-
-//   try {
-//     const userCredential = await auth.signInWithEmailAndPassword(email, password);
-//     const user = userCredential.user;
-
-//     // Get Firebase ID token (to send to Flask later if needed)
-//     const idToken = await user.getIdToken();
-
-//     // 🔹 Fetch driver's assigned route from Firestore
-//     const driverDoc = await db.collection("drivers").doc(user.uid).get();
-//     if (!driverDoc.exists) {
-//       throw new Error("Driver profile not found in Firestore.");
-//     }
-//     const driverData = driverDoc.data();
-//     const selectedRouteId = driverData.bus_route; // assuming field name is bus_route
-
-//     // Store in localStorage for later use
-//     localStorage.setItem("selectedRouteId", selectedRouteId);
-//     localStorage.setItem("driverUid", user.uid); // Store driver UID as well
-
-//     console.log("Stored routeId:", selectedRouteId); // Debug log
-
-//     // Redirect to driver dashboard
-//     window.location.href = "/driver";
-
-//   } catch (error) {
-//     console.log("Firebase error:", error); // For debugging
-    
-//     let message = "Login failed!";
-    
-//     // Check if error.message contains JSON (REST API error format)
-//     if (typeof error.message === 'string' && error.message.includes('"error"')) {
-//       try {
-//         const errorObj = JSON.parse(error.message);
-//         const errorCode = errorObj.error?.message;
-        
-//         if (errorCode === "INVALID_LOGIN_CREDENTIALS") {
-//           message = "Invalid email or password.";
-//         } else if (errorCode === "EMAIL_NOT_FOUND") {
-//           message = "No account found with this email.";
-//         } else if (errorCode === "INVALID_PASSWORD") {
-//           message = "Incorrect password.";
-//         } else if (errorCode === "INVALID_EMAIL") {
-//           message = "Invalid email format.";
-//         } else if (errorCode === "TOO_MANY_ATTEMPTS_TRY_LATER") {
-//           message = "Too many failed attempts. Please try again later.";
-//         } else if (errorCode === "USER_DISABLED") {
-//           message = "This account has been disabled.";
-//         } else {
-//           message = `Login failed: ${errorCode || 'Unknown error'}`;
-//         }
-//       } catch (parseError) {
-//         message = "Login failed: Invalid credentials.";
-//       }
-//     } 
-//     // Handle standard Firebase SDK error codes
-//     else if (error.code === "auth/user-not-found") {
-//       message = "No account found with this email.";
-//     } else if (error.code === "auth/wrong-password") {
-//       message = "Incorrect password.";
-//     } else if (error.code === "auth/invalid-email") {
-//       message = "Invalid email format.";
-//     } else if (error.code === "auth/invalid-credential" || error.code === "auth/invalid-login-credentials") {
-//       message = "Invalid email or password.";
-//     } else if (error.code === "auth/too-many-requests") {
-//       message = "Too many failed attempts. Please try again later.";
-//     } else if (error.code === "auth/user-disabled") {
-//       message = "This account has been disabled.";
-//     } else {
-//       // For debugging - you can remove this in production
-//       message = `Login failed: ${error.message}`;
-//     }
-
-//     document.getElementById("login-output").innerText = message;
-//   }
-// });
-
-// ✅ Handle signup
-// ✅ Signup
-
-document.getElementById("signup-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = event.target;
-  
-  const full_name = form.full_name.value;
-  const email = form.email.value;
-  const password = form.password.value;
-  const bus_name = form.bus_name.value;
-  const bus_number = form.bus_number.value;
-  const bus_route = form.bus_route.value;
-  const bus_timings = form.bus_timings.value;
-  
-  try {
-    console.log("Creating user account...");
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;  
-    await db.collection("drivers").doc(user.uid).set({
-      full_name,
-      email,
-      bus_name,
-      bus_number,
-      bus_route,
-      bus_timings,
-    });
-    console.log("Data saved successfully");
-    
-  
-    switchTab('login');
-    document.getElementById("login-output").innerText = "Signup successful! Please login.";
-    
-  } catch (error) {
-    console.error("Full error:", error);
-    let message = "Signup failed!";
-    if (error.code === "auth/email-already-in-use") message = "Email is already registered.";
-    else if (error.code === "auth/invalid-email") message = "Invalid email format.";
-    else if (error.code === "auth/weak-password") message = "Password should be at least 6 characters.";
-    else message = error.message;
-    
-    document.getElementById("signup-output").innerText = message;
-  }
-});
-// Toast notifications utility
-function showToast(title, description, type = 'info') {
-  const toastContainer = document.getElementById('toast-container');
-  if (!toastContainer) {
-    // Create toast container if it doesn't exist
-    const container = document.createElement('div');
-    container.id = 'toast-container';
-    container.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    `;
-    document.body.appendChild(container);
-  }
-
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.style.cssText = `
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem;
-    box-shadow: var(--shadow-card);
-    max-width: 300px;
-    color: var(--foreground);
-  `;
-
-  toast.innerHTML = `
-    <div class="toast-title" style="font-weight: bold; margin-bottom: 0.5rem;">${title}</div>
-    <div class="toast-description">${description}</div>
-  `;
-
-  const container = document.getElementById('toast-container');
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
-}
-
-// =============================================================================
-// DRIVER PORTAL FUNCTIONALITY
-// =============================================================================
-
-// Driver state and activity log
-// let driverStatus = 'on-time';
-// let activityLog = [
-//   { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
-// ];
-// Read routeId from localStorage (set during login)
-// 🔹 Get the routeId stored during login
-// LOGIN FORM CODE (login.js or in your login page)
 // LOGIN FORM CODE (login.js or in your login page)
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -295,12 +115,15 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
       throw new Error("Driver profile not found in Firestore.");
     }
     const driverData = driverDoc.data();
-    const selectedRouteId = driverData.bus_route;
+    const selectedRouteId = driverData.bus_route; // assuming field name is bus_route
 
-    // 🔹 This line is critical! It saves the route ID for the next page.
+    // Store in localStorage for later use
     localStorage.setItem("selectedRouteId", selectedRouteId);
-    console.log("Login successful! Saved routeId:", selectedRouteId);
+    localStorage.setItem("driverUid", user.uid); // Store driver UID as well
 
+    console.log("Stored routeId:", selectedRouteId); // Debug log
+
+    // Redirect to driver dashboard
     window.location.href = "/driver";
 
   } catch (error) {
@@ -355,36 +178,161 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
   }
 });
 
-// DRIVER DASHBOARD CODE (driver.js or in your driver page)
-// Main container where stops will be shown
-// Make sure this matches the ID of your HTML element
-const tripsDiv = document.getElementById("driver-trips");
+// ✅ Handle signup
+// ✅ Signup
+
+document.getElementById("signup-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+
+  const full_name = form.full_name.value.trim();
+  const email = form.email.value.trim();
+  const password = form.password.value;
+  const bus_name = form.bus_name.value.trim();
+  const bus_number = form.bus_number.value.trim();
+  const bus_route = form.bus_route.value; // this is now the document ID from dropdown
+  const bus_timings = form.bus_timings.value.trim();
+
+  // Check if a route is selected
+  if (!bus_route) {
+    document.getElementById("signup-output").innerText = "Please select a bus route.";
+    return;
+  }
+
+  try {
+    console.log("Creating user account...");
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    // Save driver info in Firestore
+    await db.collection("drivers").doc(user.uid).set({
+      full_name,
+      email,
+      bus_name,
+      bus_number,
+      bus_route,   // stores the document ID (e.g., route_22)
+      bus_timings,
+    });
+
+    console.log("Data saved successfully");
+    
+    // Switch to login tab and show success
+    switchTab('login');
+    document.getElementById("login-output").innerText = "Signup successful! Please login.";
+    document.getElementById("signup-output").innerText = ""; // clear any previous error
+
+  } catch (error) {
+    console.error("Full error:", error);
+    let message = "Signup failed!";
+    if (error.code === "auth/email-already-in-use") message = "Email is already registered.";
+    else if (error.code === "auth/invalid-email") message = "Invalid email format.";
+    else if (error.code === "auth/weak-password") message = "Password should be at least 6 characters.";
+    else message = error.message;
+
+    document.getElementById("signup-output").innerText = message;
+  }
+});
+// Load bus routes into signup dropdown
+async function loadSignupRoutes() {
+  try {
+    const response = await fetch("http://localhost:8000/routes");
+    const routes = await response.json();
+
+    const select = document.getElementById("bus_route");
+    if (!select) return;
+
+    select.innerHTML = '<option value="">--Select Route--</option>';
+
+    routes.forEach(route => {
+      const option = document.createElement("option");
+      option.value = route.route_id;      // store the document ID
+      option.textContent = `${route.route_no} → ${route.destination}`;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading signup routes:", error);
+  }
+}
+
+// Call this when signup page loads
+document.addEventListener("DOMContentLoaded", loadSignupRoutes);
+
+
+// Toast notifications utility
+function showToast(title, description, type = 'info') {
+  const toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    // Create toast container if it doesn't exist
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    `;
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.style.cssText = `
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-card);
+    max-width: 300px;
+    color: var(--foreground);
+  `;
+
+  toast.innerHTML = `
+    <div class="toast-title" style="font-weight: bold; margin-bottom: 0.5rem;">${title}</div>
+    <div class="toast-description">${description}</div>
+  `;
+
+  const container = document.getElementById('toast-container');
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+// =============================================================================
+// DRIVER PORTAL FUNCTIONALITY
+// =============================================================================
+
+// Driver state and activity log
+// let driverStatus = 'on-time';
+// let activityLog = [
+//   { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
+// ];
+
+
 
 // 🔹 Function to fetch and render stops for the driver's route
 async function renderDriverStops() {
-  // Check if the HTML element exists before trying to modify it
-  if (!tripsDiv) {
-      console.error("Error: The HTML element with ID 'driver-trips' was not found.");
-      return; // Stop the function if the element is not there
-  }
-
-  const routeId = localStorage.getItem("selectedRouteId");
   
+  const tripsDiv = document.getElementById("driver-trip-list");
+  if (!tripsDiv) return; // element not found, stop execution
+
   tripsDiv.innerHTML = "<h2>Your trips today</h2>";
 
+  const routeId = localStorage.getItem("selectedRouteId");
+// must be here
+  console.log("routeId:", routeId);
   if (!routeId) {
     tripsDiv.innerHTML += "<p>No route found. Please log in again.</p>";
-    console.error("No routeId found in localStorage!");
     return;
   }
-  
+
   try {
     const res = await fetch(`/stops/${routeId}`);
-    
-    if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const stops = await res.json();
 
     if (!stops || stops.length === 0) {
@@ -413,11 +361,11 @@ async function renderDriverStops() {
     tripsDiv.innerHTML += `<p>Error loading stops: ${err.message}</p>`;
   }
 }
+function showDriverPage() {
+  document.getElementById("driver-page").classList.remove("hidden");
+  renderDriverStops(); // now the element exists
+}
 
-// 🔹 FIX: Run the function ONLY when the page is fully loaded
-document.addEventListener("DOMContentLoaded", () => {
-  renderDriverStops();
-});
 // =============================================================================
 // PASSENGER PORTAL FUNCTIONALITY
 // =============================================================================
@@ -725,45 +673,75 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // Populate stops for Report based on route
-function populateReportStops() {
-  const routeSelect = document.getElementById('report-route-select');
-  const stopSelect = document.getElementById('report-stop-select');
-  const busSelect = document.getElementById('bus-name-select');
-  
-  if (!routeSelect || !stopSelect) return;
-  
-  const stops = routeStops[routeSelect.value] || [];
+async function populateReportStops() {
+  const routeSelect = document.getElementById("report-route-select");
+  const stopSelect = document.getElementById("report-stop-select");
+
+  const routeId = routeSelect.value;
+
+  // Reset stops dropdown
   stopSelect.innerHTML = '<option value="">--Choose Stop--</option>';
-  
-  stops.forEach(stop => {
-    const option = document.createElement('option');
-    option.value = stop;
-    option.textContent = stop;
-    stopSelect.appendChild(option);
-  });
-  
-  if (busSelect) {
-    busSelect.innerHTML = '<option value="">--Choose Bus--</option>';
+
+  if (!routeId) return; // no route selected
+
+  try {
+    const response = await fetch(`http://localhost:8000/stops/${routeId}`);
+    const stops = await response.json();
+
+    stops.forEach(stop => {
+      const option = document.createElement("option");
+      option.value = stop.stop_id;
+      option.textContent = stop.stop_name;
+      stopSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading stops for report:", error);
   }
 }
 
-// Populate bus names for Report based on selected stop
-function populateBusNames() {
-  const stopSelect = document.getElementById('report-stop-select');
-  const busSelect = document.getElementById('bus-name-select');
-  
-  if (!stopSelect || !busSelect) return;
-  
-  const buses = stopBuses[stopSelect.value] || [];
-  busSelect.innerHTML = '<option value="">--Choose Bus--</option>';
-  
-  buses.forEach(bus => {
-    const option = document.createElement('option');
-    option.value = bus.name;
-    option.textContent = `${bus.name} (${bus.number})`;
-    busSelect.appendChild(option);
-  });
+// Populate report routes on page load
+async function loadReportRoutes() {
+  try {
+    const response = await fetch("http://localhost:8000/routes");
+    const routes = await response.json();
+
+    const routeSelect = document.getElementById("report-route-select");
+    routeSelect.innerHTML = '<option value="">--Choose Route--</option>';
+
+    routes.forEach(route => {
+      const option = document.createElement("option");
+      option.value = route.route_id;
+      option.textContent = `${route.route_no} → ${route.destination}`;
+      routeSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading report routes:", error);
+  }
 }
+
+// Initialize report page 
+document.addEventListener("DOMContentLoaded", () => {
+  loadReportRoutes();
+});
+
+
+// Populate bus names for Report based on selected stop
+// function populateBusNames() {
+//   const stopSelect = document.getElementById('report-stop-select');
+//   const busSelect = document.getElementById('bus-name-select');
+  
+//   if (!stopSelect || !busSelect) return;
+  
+//   const buses = stopBuses[stopSelect.value] || [];
+//   busSelect.innerHTML = '<option value="">--Choose Bus--</option>';
+  
+//   buses.forEach(bus => {
+//     const option = document.createElement('option');
+//     option.value = bus.name;
+//     option.textContent = `${bus.name} (${bus.number})`;
+//     busSelect.appendChild(option);
+//   });
+// }
 
 // Find My Bus button clicked
 function findMyBus() {

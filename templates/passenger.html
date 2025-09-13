@@ -4,14 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SureRoute - Passenger Portal</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+  <!-- <link rel="stylesheet" href="/static/style1.css" /> -->
 </head>
 <body>
   <!-- Navigation -->
   <nav class="nav-bar">
     <div class="nav-container">
       <div class="nav-content">
-        <a href="passenger.html" class="logo-link">
+        <a href="/passenger" class="logo-link">
           <svg
             class="bus-icon"
             viewBox="0 0 24 24"
@@ -37,9 +38,9 @@
         </a>
 
         <div class="nav-buttons">
-          <a href="index.html" class="nav-btn">Home</a>
-        <a href="driver.html" class="nav-btn">Driver Portal</a>
-        <a href="passenger.html" class="nav-btn active">Passenger Portal</a>
+          <a href="/" class="nav-btn">Home</a>
+        <a href="/driver" class="nav-btn">Driver Portal</a>
+        <a href="/passenger" class="nav-btn active">Passenger Portal</a>
           
           <!-- Driver Account Button -->
           <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
@@ -105,17 +106,15 @@
             </h3>
             
             <label for="find-route-select">Select Route:</label>
-            <select id="find-route-select" class="modal-input" onchange="populateFindStops()">
-              <option value="">--Choose Route--</option>
-              <option value="Route 1">Route 1</option>
-              <option value="Route 2">Route 2</option>
-              <option value="Route 3">Route 3</option>
-            </select>
+<select id="find-route-select" class="modal-input" onchange="populateFindStops()">
+  <option value="">--Choose Route--</option>
+</select>
 
-            <label for="find-stop-select">Select Stop:</label>
-            <select id="find-stop-select" class="modal-input">
-              <option value="">--Choose Stop--</option>
-            </select>
+<label for="find-stop-select">Select Stop:</label>
+<select id="find-stop-select" class="modal-input">
+  <option value="">--Choose Stop--</option>
+</select>
+
 
             <button class="btn-primary" style="margin-top:1rem; width: 100%;" onclick="findMyBus()">
               Find My Bus
@@ -174,6 +173,8 @@
     </main>
   </div>
 
-  <script src="script.js"></script>
+  <script src="{{ url_for('static', path='script.js') }}" defer></script>
+  <!-- <script src="{{ url_for('static', path='script1.js') }}" defer></script> -->
+  <!-- <script src="/static/script1.js"></script> -->
 </body>
 </html>

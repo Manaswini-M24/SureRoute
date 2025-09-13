@@ -4,15 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SureRoute - Driver Portal</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="style1.css" />
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
   <!-- Navigation -->
   <nav class="nav-bar">
     <div class="nav-container">
       <div class="nav-content">
-        <a href="driver.html" class="logo-link">
+        <a href="/driver" class="logo-link">
           <svg
             class="bus-icon"
             viewBox="0 0 24 24"
@@ -38,9 +37,9 @@
         </a>
 
         <div class="nav-buttons">
-            <a href="index.html" class="nav-btn">Home</a>
-        <a href="driver.html" class="nav-btn active">Driver Portal</a>
-        <a href="passenger.html" class="nav-btn">Passenger Portal</a>
+            <a href="/" class="nav-btn">Home</a>
+        <a href="/driver" class="nav-btn active">Driver Portal</a>
+        <a href="/passenger" class="nav-btn">Passenger Portal</a>
 
           <!-- Driver Account Button -->
           <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
@@ -61,19 +60,24 @@
       </section>
       
       <!-- Live Trip View -->
-      <section id="driver-live-trip" class="hidden">
-        <!-- Back Button -->
-        <button onclick="showDriverTripSelection()" class="btn-secondary" style="margin-bottom: 1rem;">
-          ← Back
-        </button>
-        <h2>Live Trip</h2>
-        <p><strong>Bus ID:</strong> <span id="driver-bus-id"></span></p>
-        <p><strong>Bus Name:</strong> <span id="driver-bus-name"></span></p>
-        <p><strong>Route ID:</strong> <span id="driver-route-id"></span></p>
+     <div id="driver-live-trip" class="hidden">
+  <!-- Back Button -->
+  <button onclick="showDriverTripSelection()" class="btn-secondary" style="margin-bottom: 1rem;">
+    ← Back
+  </button>
+  <button onclick="debugCheck()">Debug Check</button>
+  <button onclick="renderDriverStops()">Reload Stops</button>
+  <h2>Live Trip</h2>
+  <p><strong>Bus ID:</strong> <span id="driver-bus-id"></span></p>
+  <p><strong>Bus Name:</strong> <span id="driver-bus-name"></span></p>
+  <p><strong>Route ID:</strong> <span id="driver-route-id"></span></p>
 
-        <h3>Stops</h3>
-        <ul id="driver-stops-list" style="list-style: none; padding: 0;"></ul>
-
+  <h3>Stops</h3>
+  <div id="driver-stops-container" style="list-style: none; padding: 0;"></div>
+  <!-- Changed this ID to driver-stops-container -->
+  
+  <!-- rest of your HTML -->
+</div>
         <div style="margin-top: 1.5rem;">
           <button id="departed-btn" style="width: 100%; font-size: 1.5rem; padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">Mark Departed</button>
         </div>
@@ -93,11 +97,11 @@
         </div>
 
         <p id="delay-message" style="margin-top: 1rem; font-weight: bold; color: #f44336;"></p>
-      </section>
+      </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
-  <script src="script1.js"></script>
+ <script src="{{ url_for('static', path='script.js') }}" defer></script>
+ <!-- <script src="{{ url_for('static', path='script1.js') }}" defer></script> -->
 </body>
 </html>

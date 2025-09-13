@@ -28,14 +28,26 @@ A production-ready FastAPI service that predicts bus arrival times using machine
 ### 🔌 Quick Start
 
 ```bash
-# Test prediction with curl
-curl -X POST "https://megha-277-sureroute-eta-predictor.hf.space/predict_delay" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "trip_id": "BUS_51D_001",
-    "stop_id": "r51d_s5",
-    "scheduled_arrival": 450.0,
-    "delay_prev_stop": 5.0,
-    "day": "monday", 
-    "time_of_day": "morning_rush"
-  }'
+{
+  "trip_id": "string",
+  "stop_id": "string", 
+  "scheduled_arrival": 450.0,
+  "delay_prev_stop": 5.0,
+  "day": "monday",
+  "time_of_day": "morning_rush"
+}
+
+Data Collection → FastAPI Service → ML Model → Prediction
+      ↑               ↓               ↓           ↓
+   CSV Storage    Hugging Face    XGBoost    Real-time Response
+      ↑               ↓               ↓           ↓
+Auto-Backup       Dockerized     Auto-Retrain  Frontend
+
+Technologies Used
+Backend: FastAPI, Python 3.11
+
+ML: XGBoost, Scikit-learn, Pandas
+
+Deployment: Hugging Face Spaces, Docker
+
+Monitoring: Custom analytics dashboard

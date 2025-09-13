@@ -74,9 +74,6 @@
 
   <h3>Stops</h3>
   <div id="driver-stops-container" style="list-style: none; padding: 0;"></div>
-  <!-- Changed this ID to driver-stops-container -->
-  
-  <!-- rest of your HTML -->
 </div>
         <div style="margin-top: 1.5rem;">
           <button id="departed-btn" style="width: 100%; font-size: 1.5rem; padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">Mark Departed</button>
@@ -98,6 +95,38 @@
 
         <p id="delay-message" style="margin-top: 1rem; font-weight: bold; color: #f44336;"></p>
       </div>
+    </div>
+  </div>
+  <div id="account-modal" class="modal hidden">
+    <div class="modal-content account-modal-content">
+      <div class="modal-tabs">
+        <button id="tab-login" class="tab active" onclick="switchTab('login')">Login</button>
+        <button id="tab-signup" class="tab" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+      <form id="login-form" class="account-form active" >
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
+        <input type="password" class="modal-input" placeholder="Password" name="password" required />
+        <button type="submit" class="btn-primary modal-btn">Log In</button>
+      </form>
+      <div id="login-output" style="margin-top:20px; color:blue;"></div>
+
+      <form id="signup-form" class="account-form" >
+        <input type="text" class="modal-input" placeholder="Full Name" required name="full_name"/>
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
+        <input type="password" class="modal-input" placeholder="Password" name="password" required />
+        <input type="text" class="modal-input" placeholder="Bus Name" name="bus_name" required />
+        <input type="text" class="modal-input" placeholder="Bus Number" name="bus_number" required />
+        <label for="bus_route">Bus Route:</label>
+<select id="bus_route" name="bus_route" class="modal-input" required>
+  <option value="">--Select Route--</option>
+</select>
+
+        <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" name="bus_timings" required />
+        <button type="submit" class="btn-primary modal-btn">Sign Up</button>
+      </form>
+      <div id="signup-output" style="margin-top:20px; color:blue;"></div>
+
+      <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
     </div>
   </div>
 

@@ -90,3 +90,18 @@ def get_stop_across_routes_by_name(stop_name: str):
     except Exception as e:
         print(f"❌ Error in get_stop_across_routes_by_name for '{stop_name}': {e}")
         return []
+
+def update_stop_status(driver_uid: str, route_id: str, stop_id: str, status: str, timestamp: str, reason: str = None):
+    """
+    Updates a stop's status (departed/delayed) in Firebase.
+    """
+    stop_ref = db.collection("route_data").document(route_id).collection("stops").document(stop_id)
+    update_data = {
+        "status": status,
+        "last_updated_by": driver_uid,
+        "timestamp": timestamp
+    }
+    if reason:
+        update_data["reason"] = reason
+
+    stop_ref.update(update_data)

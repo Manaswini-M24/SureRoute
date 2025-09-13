@@ -62,7 +62,7 @@
             </svg>
             Home
           </a>
-          <a class="nav-btn" id="driver-btn" href="/driver">
+          <a class="nav-btn" id="driver-btn" onclick="openAccountModal()">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -120,7 +120,7 @@
                 </svg>
                 Passenger Portal
               </a>
-              <a class="btn-secondary" href="{{url_for('driver')}}">
+              <a class="btn-secondary" onclick="openAccountModal()">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2" />
                   <circle cx="9" cy="7" r="4" stroke-width="2" />

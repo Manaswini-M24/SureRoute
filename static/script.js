@@ -2,6 +2,8 @@
 
 // Global state
 let currentPage = 'landing';
+let currentStops = [];
+let currentStopIndex = 0;
 // let driverStatus = 'on-time';
 // let passengerStatus = 'on-time';
 // let driverEta = '2 minutes to next stop';
@@ -10,6 +12,10 @@ let currentPage = 'landing';
 // let activityLog = [ 
 //   { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
 // ];
+const departedBtn = document.getElementById("departed-btn");
+const delayReasonSelect = document.getElementById("delay-reason-select");
+const delayFlagBtn = document.getElementById("delay-flag-btn");
+const delayMessage = document.getElementById("delay-message");
 let notifications = [
   { id: 1, timestamp: new Date(), message: 'Bus tracking started', type: 'info' }
 ];
@@ -301,30 +307,21 @@ function showToast(title, description, type = 'info') {
     toast.remove();
   }, 3000);
 }
-
-// =============================================================================
 // DRIVER PORTAL FUNCTIONALITY
-// =============================================================================
-
-// Driver state and activity log
-// let driverStatus = 'on-time';
-// let activityLog = [
-//   { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
-// ];
-
-
 
 // 🔹 Function to fetch and render stops for the driver's route
+
+
+// ===== FETCH AND RENDER STOPS =====
 async function renderDriverStops() {
-  
   const tripsDiv = document.getElementById("driver-trip-list");
-  if (!tripsDiv) return; // element not found, stop execution
+  if (!tripsDiv) return;
 
   tripsDiv.innerHTML = "<h2>Your trips today</h2>";
 
   const routeId = localStorage.getItem("selectedRouteId");
-// must be here
   console.log("routeId:", routeId);
+
   if (!routeId) {
     tripsDiv.innerHTML += "<p>No route found. Please log in again.</p>";
     return;
@@ -340,42 +337,118 @@ async function renderDriverStops() {
       return;
     }
 
+    currentStops = stops; // save globally
+    currentStopIndex = 0;
+
     const ul = document.createElement("ul");
     ul.style.listStyle = "none";
     ul.style.padding = "0";
-
-    stops.forEach(stop => {
-      const li = document.createElement("li");
-      li.textContent = stop.stop_name;
-      li.style.padding = "0.5rem";
-      li.style.marginBottom = "0.25rem";
-      li.style.borderRadius = "var(--radius)";
-      li.style.backgroundColor = "var(--muted)";
-      li.style.color = "var(--foreground)";
-      ul.appendChild(li);
-    });
-
     tripsDiv.appendChild(ul);
+
+    updateStopsView();
+
   } catch (err) {
     console.error("Error fetching stops:", err);
     tripsDiv.innerHTML += `<p>Error loading stops: ${err.message}</p>`;
   }
 }
-function showDriverPage() {
-  document.getElementById("driver-page").classList.remove("hidden");
-  renderDriverStops(); // now the element exists
+
+// ===== UPDATE STOPS UI =====
+function updateStopsView() {
+  const ul = document.querySelector("#driver-trip-list ul");
+  if (!ul) return;
+
+  ul.innerHTML = "";
+
+  currentStops.forEach((stop, index) => {
+    const li = document.createElement("li");
+    li.textContent = stop.stop_name;
+    li.style.padding = "0.5rem";
+    li.style.marginBottom = "0.25rem";
+    li.style.borderRadius = "var(--radius)";
+    li.style.backgroundColor = index === currentStopIndex ? "var(--success)" : "var(--muted)";
+    li.style.color = index === currentStopIndex ? "white" : "var(--foreground)";
+    li.style.fontWeight = index === currentStopIndex ? "bold" : "normal";
+    ul.appendChild(li);
+  });
+
+  if (delayMessage) delayMessage.textContent = "";
+  if (delayReasonSelect) delayReasonSelect.value = "";
 }
 
-// =============================================================================
-// PASSENGER PORTAL FUNCTIONALITY
-// =============================================================================
+// ===== MARK STOP DEPARTED =====
+async function sendStopStatus(stop, status, reason = null) {
+  const routeId = localStorage.getItem("selectedRouteId");
+  const driverUid = localStorage.getItem("driverUid"); // or wherever you store UID
+  const timestamp = new Date().toISOString();
 
-// Passenger state and notifications
-// let passengerStatus = 'on-time';
-// let passengerEta = '5 minutes';
-// let notifications = [
-//   { id: 1, timestamp: new Date(), message: 'Bus tracking started', type: 'info' }
-// ];
+  const payload = {
+    driver_uid: driverUid,
+    route_id: routeId,
+    stop_id: stop.stop_id,
+    status: status,
+    timestamp: timestamp
+  };
+  
+  if (reason) payload.reason = reason;
+
+  try {
+    const res = await fetch("/driver/update-stop-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to update stop status", err);
+    throw err;
+  }
+}
+
+// ===== Mark Departed =====
+departedBtn.addEventListener("click", async () => {
+  if (currentStops.length === 0 || currentStopIndex >= currentStops.length) return;
+
+  const stop = currentStops[currentStopIndex];
+  try {
+    await sendStopStatus(stop, "departed");
+    showToast("Stop Departed", `Departed from ${stop.stop_name}`, "success");
+    currentStopIndex++;
+    if (currentStopIndex < currentStops.length) updateStopsView();
+    else {
+      showToast("Trip Completed", "All stops completed!", "success");
+      currentStops = [];
+      currentStopIndex = 0;
+      document.getElementById("driver-trip-list").innerHTML = "<h2>Your trips today</h2>";
+    }
+  } catch { /* already logged */ }
+});
+
+// ===== Flag Delay =====
+delayFlagBtn.addEventListener("click", async () => {
+  const reason = delayReasonSelect.value;
+  if (!reason) {
+    delayMessage.textContent = "Please select a reason for the delay.";
+    showToast("Selection Required", "Please select a delay reason.", "warning");
+    return;
+  }
+  
+  const stop = currentStops[currentStopIndex];
+  try {
+    await sendStopStatus(stop, "delayed", reason);
+    delayMessage.textContent = `Delay reported: ${reason}`;
+    showToast("Delay Reported", `Delay reason: ${reason}`, "warning");
+  } catch { /* already logged */ }
+});
+
+// ===== SHOW DRIVER PAGE =====
+function showDriverPage() {
+  document.getElementById("driver-page").classList.remove("hidden");
+  renderDriverStops();
+}
+
+
+// PASSENGER PORTAL FUNCTIONALITY
 
 // Data for routes, stops, and buses with coordinates
 const routeStops = {
@@ -725,118 +798,110 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// Populate bus names for Report based on selected stop
-// function populateBusNames() {
-//   const stopSelect = document.getElementById('report-stop-select');
-//   const busSelect = document.getElementById('bus-name-select');
-  
-//   if (!stopSelect || !busSelect) return;
-  
-//   const buses = stopBuses[stopSelect.value] || [];
-//   busSelect.innerHTML = '<option value="">--Choose Bus--</option>';
-  
-//   buses.forEach(bus => {
-//     const option = document.createElement('option');
-//     option.value = bus.name;
-//     option.textContent = `${bus.name} (${bus.number})`;
-//     busSelect.appendChild(option);
-//   });
-// }
 
-// Find My Bus button clicked
-function findMyBus() {
-  const routeSelect = document.getElementById('find-route-select');
+async function findMyBus() {
   const stopSelect = document.getElementById('find-stop-select');
   const busListDiv = document.getElementById('bus-list');
 
-  // Check if elements exist
-  if (!routeSelect || !stopSelect || !busListDiv) {
-    console.error('Required elements not found');
-    showToast('Error', 'Required form elements not found!', 'error');
+  if (!stopSelect || !busListDiv) {
+    showToast('Error', 'Required elements not found!', 'error');
     return;
   }
 
-  const route = routeSelect.value;
   const stop = stopSelect.value;
-
-  // Validation
-  if (!route || !stop) {
-    busListDiv.innerHTML = '<p style="color: var(--warning); padding: 1rem; text-align: center;">Please select both route and stop.</p>';
-    showToast('Selection Required', 'Please select both route and stop.', 'warning');
+  if (!stop) {
+    busListDiv.innerHTML = '<p style="color: var(--warning); padding: 1rem; text-align: center;">Please select a stop.</p>';
     return;
   }
 
-  // Fetch buses for selected stop
-  const buses = stopBuses[stop] || [];
+  try {
+    const res = await fetch(`/api/upcoming_trips/${stop}`);
+    const buses = await res.json();
 
-  if (buses.length === 0) {
-    busListDiv.innerHTML = '<p style="color: var(--muted-foreground); padding: 1rem; text-align: center;">No buses available for this stop.</p>';
-    return;
-  }
+    if (buses.length === 0) {
+      busListDiv.innerHTML = '<p style="color: var(--muted-foreground); padding: 1rem; text-align: center;">No upcoming buses.</p>';
+      return;
+    }
 
-  // Create bus list with proper styling
-  let html = '<div style="margin-top: 1rem;"><h3 style="margin-bottom: 1rem; color: var(--primary);">Available Buses:</h3>';
-  html += '<ul style="list-style: none; padding: 0;">';
-  
-  buses.forEach(bus => {
-    html += `
-      <li style="
-        margin-bottom: 0.75rem; 
-        padding: 1rem; 
-        background: var(--card); 
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-card);
-        transition: var(--transition-smooth);
-      ">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <strong style="color: var(--primary); font-size: 1.1rem;">${bus.name}</strong>
-            <div style="color: var(--muted-foreground); font-size: 0.9rem;">Bus Number: ${bus.number}</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="color: var(--accent); font-weight: 600;">Operating Hours</div>
-            <div style="color: var(--foreground); font-size: 0.9rem;">${bus.timings}</div>
-          </div>
-        </div>
-      </li>
+    // Render table of ETAs
+    let html = `
+      <div style="margin-top: 1rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--primary);">Upcoming Buses:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="background: var(--card); color: var(--primary);">
+            <th style="padding: 0.5rem; text-align: left;">Trip</th>
+            <th style="padding: 0.5rem;">Scheduled</th>
+            <th style="padding: 0.5rem;">Predicted ETA</th>
+            <th style="padding: 0.5rem;">Delay</th>
+          </tr>
     `;
-  });
-  
-  html += '</ul></div>';
-  busListDiv.innerHTML = html;
-  
-  showToast('Buses Found', `Found ${buses.length} bus(es) for ${stop}`, 'success');
+    buses.forEach(bus => {
+      html += `
+        <tr style="border-top: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">${bus.trip_id}</td>
+          <td style="padding: 0.5rem;">${bus.scheduled_arrival}</td>
+          <td style="padding: 0.5rem;">${bus.predicted_eta_time}</td>
+          <td style="padding: 0.5rem; color: ${bus.predicted_delay > 0 ? 'red' : 'green'};">
+            ${bus.predicted_delay > 0 ? '+' + bus.predicted_delay : 'On Time'}
+          </td>
+        </tr>
+      `;
+    });
+    html += '</table></div>';
+    busListDiv.innerHTML = html;
+
+    showToast('Buses Found', `Found ${buses.length} bus(es) for ${stop}`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Error', 'Failed to fetch bus info.', 'error');
+  }
 }
 
 // Submit report button clicked
-function submitReport() {
+async function submitReport() {
   const routeSelect = document.getElementById('report-route-select');
   const stopSelect = document.getElementById('report-stop-select');
-  const busSelect = document.getElementById('bus-name-select');
   const statusInput = document.querySelector('input[name="status-report"]:checked');
 
-  if (!routeSelect || !stopSelect || !busSelect || !statusInput) {
+  if (!routeSelect || !stopSelect || !statusInput) {
     showToast('Form Error', 'Required form elements not found.', 'error');
     return;
   }
 
   const route = routeSelect.value;
   const stop = stopSelect.value;
-  const busName = busSelect.value;
   const status = statusInput.value;
 
-  if (!route || !stop || !busName || !status) {
+  if (!route || !stop || !status) {
     showToast('Incomplete Form', 'Please fill out all report fields.', 'warning');
     return;
   }
 
-  showToast('Report Submitted', `Route: ${route}, Stop: ${stop}, Bus: ${busName}, Status: ${status}`, 'success');
+  try {
+    const res = await fetch('/driver/update-stop-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        driver_uid: "passenger",   // static string
+        route_id: route,
+        stop_id: stop,
+        status: status.toLowerCase(),
+        timestamp: new Date().toISOString()
+      })
+    });
 
-  // Reset form fields
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+
+    showToast('Report Submitted', `Route: ${route}, Stop: ${stop}, Status: ${status}`, 'success');
+  } catch (err) {
+    console.error("Error submitting passenger report:", err);
+    showToast('Error', 'Failed to submit report. Try again.', 'error');
+  }
+
+  // Reset form
   routeSelect.value = '';
   stopSelect.innerHTML = '<option value="">--Choose Stop--</option>';
-  busSelect.innerHTML = '<option value="">--Choose Bus--</option>';
   const onTimeRadio = document.querySelector('input[name="status-report"][value="On Time"]');
   if (onTimeRadio) onTimeRadio.checked = true;
 }

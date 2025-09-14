@@ -4,15 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SureRoute - Driver Portal</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="style1.css" />
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
   <!-- Navigation -->
   <nav class="nav-bar">
     <div class="nav-container">
       <div class="nav-content">
-        <a href="driver.html" class="logo-link">
+        <a href="/driver" class="logo-link">
           <svg
             class="bus-icon"
             viewBox="0 0 24 24"
@@ -38,9 +37,9 @@
         </a>
 
         <div class="nav-buttons">
-            <a href="index.html" class="nav-btn">Home</a>
-        <a href="driver.html" class="nav-btn active">Driver Portal</a>
-        <a href="passenger.html" class="nav-btn">Passenger Portal</a>
+            <a href="/" class="nav-btn">Home</a>
+        <a href="/driver" class="nav-btn active">Driver Portal</a>
+        <a href="/passenger" class="nav-btn">Passenger Portal</a>
 
           <!-- Driver Account Button -->
           <button class="nav-btn" id="driver-account-btn" onclick="openAccountModal()">
@@ -61,19 +60,21 @@
       </section>
       
       <!-- Live Trip View -->
-      <section id="driver-live-trip" class="hidden">
-        <!-- Back Button -->
-        <button onclick="showDriverTripSelection()" class="btn-secondary" style="margin-bottom: 1rem;">
-          ← Back
-        </button>
-        <h2>Live Trip</h2>
-        <p><strong>Bus ID:</strong> <span id="driver-bus-id"></span></p>
-        <p><strong>Bus Name:</strong> <span id="driver-bus-name"></span></p>
-        <p><strong>Route ID:</strong> <span id="driver-route-id"></span></p>
+     <div id="driver-live-trip" class="hidden">
+  <!-- Back Button -->
+  <button onclick="showDriverTripSelection()" class="btn-secondary" style="margin-bottom: 1rem;">
+    ← Back
+  </button>
+  <button onclick="debugCheck()">Debug Check</button>
+  <button onclick="renderDriverStops()">Reload Stops</button>
+  <h2>Live Trip</h2>
+  <p><strong>Bus ID:</strong> <span id="driver-bus-id"></span></p>
+  <p><strong>Bus Name:</strong> <span id="driver-bus-name"></span></p>
+  <p><strong>Route ID:</strong> <span id="driver-route-id"></span></p>
 
-        <h3>Stops</h3>
-        <ul id="driver-stops-list" style="list-style: none; padding: 0;"></ul>
-
+  <h3>Stops</h3>
+  <div id="driver-stops-container" style="list-style: none; padding: 0;"></div>
+</div>
         <div style="margin-top: 1.5rem;">
           <button id="departed-btn" style="width: 100%; font-size: 1.5rem; padding: 1rem; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">Mark Departed</button>
         </div>
@@ -93,11 +94,43 @@
         </div>
 
         <p id="delay-message" style="margin-top: 1rem; font-weight: bold; color: #f44336;"></p>
-      </section>
+      </div>
+    </div>
+  </div>
+  <div id="account-modal" class="modal hidden">
+    <div class="modal-content account-modal-content">
+      <div class="modal-tabs">
+        <button id="tab-login" class="tab active" onclick="switchTab('login')">Login</button>
+        <button id="tab-signup" class="tab" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+      <form id="login-form" class="account-form active" >
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
+        <input type="password" class="modal-input" placeholder="Password" name="password" required />
+        <button type="submit" class="btn-primary modal-btn">Log In</button>
+      </form>
+      <div id="login-output" style="margin-top:20px; color:blue;"></div>
+
+      <form id="signup-form" class="account-form" >
+        <input type="text" class="modal-input" placeholder="Full Name" required name="full_name"/>
+        <input type="email" class="modal-input" placeholder="Email" name="email" required />
+        <input type="password" class="modal-input" placeholder="Password" name="password" required />
+        <input type="text" class="modal-input" placeholder="Bus Name" name="bus_name" required />
+        <input type="text" class="modal-input" placeholder="Bus Number" name="bus_number" required />
+        <label for="bus_route">Bus Route:</label>
+<select id="bus_route" name="bus_route" class="modal-input" required>
+  <option value="">--Select Route--</option>
+</select>
+
+        <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" name="bus_timings" required />
+        <button type="submit" class="btn-primary modal-btn">Sign Up</button>
+      </form>
+      <div id="signup-output" style="margin-top:20px; color:blue;"></div>
+
+      <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
-  <script src="script1.js"></script>
+ <script src="{{ url_for('static', path='script.js') }}" defer></script>
+ <!-- <script src="{{ url_for('static', path='script1.js') }}" defer></script> -->
 </body>
 </html>

@@ -2,14 +2,20 @@
 
 // Global state
 let currentPage = 'landing';
-let driverStatus = 'on-time';
-let passengerStatus = 'on-time';
-let driverEta = '2 minutes to next stop';
-let passengerEta = '5 minutes';
+let currentStops = [];
+let currentStopIndex = 0;
+// let driverStatus = 'on-time';
+// let passengerStatus = 'on-time';
+// let driverEta = '2 minutes to next stop';
+// let passengerEta = '5 minutes';
 
-let activityLog = [
-  { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
-];
+// let activityLog = [ 
+//   { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
+// ];
+const departedBtn = document.getElementById("departed-btn");
+const delayReasonSelect = document.getElementById("delay-reason-select");
+const delayFlagBtn = document.getElementById("delay-flag-btn");
+const delayMessage = document.getElementById("delay-message");
 let notifications = [
   { id: 1, timestamp: new Date(), message: 'Bus tracking started', type: 'info' }
 ];
@@ -41,248 +47,25 @@ function showPage(pageName) {
   currentPage = pageName;
 }
 
-// Toast notifications (uses browser notification API if granted)
-function showToast(title, description, type = 'info') {
-  const toastContainer = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
 
-  toast.innerHTML = `
-    <div class="toast-title">${title}</div>
-    <div class="toast-description">${description}</div>
-  `;
+// Entry point
+function initApp() {
+  console.log("App initialized");
 
-  toastContainer.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
-
-  if (Notification.permission === 'granted') {
-    new Notification(title, {
-      body: description,
-      icon: '/favicon.ico'
-    });
-  }
+  // Load routes when page loads
+  loadRoutes();
+  loadReportRoutes();
+  renderDriverStops();
+  event.preventDefault();
+  loadSignupRoutes();
+  // Add other new functions if needed
+  // renderLandingPage();
+  // setupEventListeners();
+  // etc.
 }
 
-// Driver Portal functions
-function updateDriverStatus(action) {
-  let statusText = '';
-  let actionText = '';
-
-  if (action === 'arrived') {
-    driverStatus = 'on-time';
-    statusText = 'Arrived at stop';
-    actionText = 'Marked as arrived at stop';
-    driverEta = 'At stop';
-  } else if (action === 'departed') {
-    driverStatus = 'on-time';
-    statusText = 'Departed from stop';
-    actionText = 'Departed from stop';
-    driverEta = '3 minutes to next stop';
-  }
-
-  updateDriverStatusDisplay();
-  updateDriverLastUpdated();
-  addActivity(actionText, 'driver');
-  showToast('Status Updated', statusText, 'success');
-}
-
-function updateDriverStatusDisplay() {
-  const statusElement = document.getElementById('driver-status');
-  const statusConfig = getStatusConfig(driverStatus);
-  statusElement.className = `status-badge ${driverStatus}`;
-  statusElement.innerHTML = `
-    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      ${statusConfig.icon}
-    </svg>
-    <span>${statusConfig.label}</span>
-  `;
-}
-
-function updateDriverLastUpdated() {
-  document.getElementById('driver-last-updated').textContent = 'Just now';
-}
-
-function addActivity(action, type = 'driver') {
-  const activity = {
-    id: activityLog.length + 1,
-    timestamp: new Date(),
-    action,
-    type
-  };
-  activityLog.unshift(activity);
-  renderActivityLog();
-}
-
-function renderActivityLog() {
-  const activityLogElement = document.getElementById('activity-log');
-  activityLogElement.innerHTML = '';
-  activityLog.slice(0, 10).forEach(activity => {
-    const item = document.createElement('div');
-    item.className = 'activity-item';
-    const timeAgo = getTimeAgo(activity.timestamp);
-    item.innerHTML = `
-      <span class="activity-time">${timeAgo}</span>
-      <span class="activity-text">${activity.action}</span>
-      <span class="activity-type ${activity.type}">${activity.type}</span>
-    `;
-    activityLogElement.appendChild(item);
-  });
-}
-
-// Passenger Portal functions
-function reportIssue(type) {
-  let title = '';
-  let description = '';
-
-  if (type === 'delay') {
-    title = 'Delay Reported';
-    description = 'Thank you for reporting the delay. Driver has been notified.';
-    passengerStatus = 'delayed';
-    passengerEta = '8 minutes';
-  } else if (type === 'missed') {
-    title = 'Missed Bus Reported';
-    description = 'Sorry you missed the bus. Next bus ETA updated.';
-    passengerStatus = 'delayed';
-    passengerEta = '15 minutes';
-  }
-
-  updatePassengerStatusDisplay();
-  updatePassengerEta();
-  updatePassengerLastUpdated();
-  addNotification(`${type === 'delay' ? 'Delay' : 'Missed bus'} reported`, 'warning');
-  showToast(title, description, type === 'delay' ? 'warning' : 'error');
-}
-
-function updatePassengerStatusDisplay() {
-  const statusElement = document.getElementById('passenger-status');
-  const statusConfig = getStatusConfig(passengerStatus);
-  statusElement.className = `status-badge ${passengerStatus}`;
-  statusElement.innerHTML = `
-    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      ${statusConfig.icon}
-    </svg>
-    <span>${statusConfig.label}</span>
-  `;
-}
-
-function updatePassengerEta() {
-  document.getElementById('passenger-eta').textContent = passengerEta;
-}
-
-function updatePassengerLastUpdated() {
-  document.getElementById('passenger-last-updated').textContent = 'Just now';
-}
-
-function addNotification(message, type = 'info') {
-  const notification = {
-    id: notifications.length + 1,
-    timestamp: new Date(),
-    message,
-    type
-  };
-  notifications.unshift(notification);
-  renderNotifications();
-}
-
-function renderNotifications() {
-  const notificationsList = document.getElementById('notifications-list');
-  notificationsList.innerHTML = '';
-  notifications.slice(0, 10).forEach(notification => {
-    const item = document.createElement('div');
-    item.className = 'notification-item';
-    const timeAgo = getTimeAgo(notification.timestamp);
-    item.innerHTML = `
-      <span class="notification-time">${timeAgo}</span>
-      <span class="notification-text">${notification.message}</span>
-    `;
-    notificationsList.appendChild(item);
-  });
-}
-
-// Utility functions
-function getStatusConfig(status) {
-  switch (status) {
-    case 'on-time':
-      return {
-        label: 'On Time',
-        icon: '<path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke-width="2"/><path d="m9 12 2 2 4-4" stroke-width="2"/>'
-      };
-    case 'delayed':
-      return {
-        label: 'Delayed',
-        icon: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" stroke-width="2"/><path d="M12 9v4" stroke-width="2"/><path d="m12 17 .01 0" stroke-width="2"/>'
-      };
-    case 'early':
-      return {
-        label: 'Early',
-        icon: '<circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12,6 12,12 16,14" stroke-width="2"/>'
-      };
-    default:
-      return {
-        label: 'Unknown',
-        icon: '<circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12,6 12,12 16,14" stroke-width="2"/>'
-      };
-  }
-}
-
-function getTimeAgo(timestamp) {
-  const now = new Date();
-  const diff = now - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes === 1) return '1 min ago';
-  if (minutes < 60) return `${minutes} mins ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours === 1) return '1 hour ago';
-  return `${hours} hours ago`;
-}
-
-function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-// Simulate driver system activity
-function simulateDriverUpdates() {
-  setInterval(() => {
-    if (currentPage === 'driver') {
-      addActivity('System check completed', 'system');
-    }
-  }, 30000);
-}
-
-// Simulate countdown for passenger ETA
-function simulatePassengerUpdates() {
-  setInterval(() => {
-    if (currentPage === 'passenger' && passengerStatus === 'on-time') {
-      const etaMinutes = parseInt(passengerEta);
-      if (etaMinutes > 1) {
-        passengerEta = `${etaMinutes - 1} minutes`;
-        updatePassengerEta();
-      }
-    }
-  }, 60000);
-}
-
-// Initialize app on load
-function init() {
-  requestNotificationPermission();
-  simulateDriverUpdates();
-  simulatePassengerUpdates();
-  updateDriverStatusDisplay();
-  updatePassengerStatusDisplay();
-  updatePassengerEta();
-  renderActivityLog();
-  renderNotifications();
-  showPage('landing');
-  console.log('SureRoute application initialized');
-}
-
-document.addEventListener('DOMContentLoaded', init);
+// Run after DOM is loaded
+document.addEventListener("DOMContentLoaded", initApp);
 
 // ---------------------------
 // Driver Account Modal Logic
@@ -318,6 +101,7 @@ function switchTab(tab) {
 }
 
 // ✅ Login
+// LOGIN FORM CODE (login.js or in your login page)
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.target;
@@ -331,10 +115,23 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
     // Get Firebase ID token (to send to Flask later if needed)
     const idToken = await user.getIdToken();
 
-    // Example: send token to Flask protected route
-    // await fetch("/protected", { headers: { Authorization: idToken } });
+    // 🔹 Fetch driver's assigned route from Firestore
+    const driverDoc = await db.collection("drivers").doc(user.uid).get();
+    if (!driverDoc.exists) {
+      throw new Error("Driver profile not found in Firestore.");
+    }
+    const driverData = driverDoc.data();
+    const selectedRouteId = driverData.bus_route; // assuming field name is bus_route
 
+    // Store in localStorage for later use
+    localStorage.setItem("selectedRouteId", selectedRouteId);
+    localStorage.setItem("driverUid", user.uid); // Store driver UID as well
+
+    console.log("Stored routeId:", selectedRouteId); // Debug log
+
+    // Redirect to driver dashboard
     window.location.href = "/driver";
+
   } catch (error) {
     console.log("Firebase error:", error); // For debugging
     
@@ -387,55 +184,49 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
   }
 });
 
-HEAD
-// ✅ Your Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyCwhbI3PxOT6xN-KejyiuC2GrpBhkmEC8o",
-    authDomain: "driver-login-portal.firebaseapp.com",
-    projectId: "driver-login-portal",
-     storageBucket: "driver-login-portal.appspot.com",
-    messagingSenderId: "54907190318",
-    appId: "1:54907190318:web:5c063f644c1e6fa876b3bf"
-  };
-
-// ✅ Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
 // ✅ Handle signup
 // ✅ Signup
- origin/main
+
 document.getElementById("signup-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.target;
-  
-  const full_name = form.full_name.value;
-  const email = form.email.value;
+
+  const full_name = form.full_name.value.trim();
+  const email = form.email.value.trim();
   const password = form.password.value;
-  const bus_name = form.bus_name.value;
-  const bus_number = form.bus_number.value;
-  const bus_route = form.bus_route.value;
-  const bus_timings = form.bus_timings.value;
-  
+  const bus_name = form.bus_name.value.trim();
+  const bus_number = form.bus_number.value.trim();
+  const bus_route = form.bus_route.value; // this is now the document ID from dropdown
+  const bus_timings = form.bus_timings.value.trim();
+
+  // Check if a route is selected
+  if (!bus_route) {
+    document.getElementById("signup-output").innerText = "Please select a bus route.";
+    return;
+  }
+
   try {
     console.log("Creating user account...");
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;  
+    const user = userCredential.user;
+
+    // Save driver info in Firestore
     await db.collection("drivers").doc(user.uid).set({
       full_name,
       email,
       bus_name,
       bus_number,
-      bus_route,
+      bus_route,   // stores the document ID (e.g., route_22)
       bus_timings,
     });
+
     console.log("Data saved successfully");
     
-  
+    // Switch to login tab and show success
     switchTab('login');
     document.getElementById("login-output").innerText = "Signup successful! Please login.";
-    
+    document.getElementById("signup-output").innerText = ""; // clear any previous error
+
   } catch (error) {
     console.error("Full error:", error);
     let message = "Signup failed!";
@@ -443,7 +234,679 @@ document.getElementById("signup-form").addEventListener("submit", async (event) 
     else if (error.code === "auth/invalid-email") message = "Invalid email format.";
     else if (error.code === "auth/weak-password") message = "Password should be at least 6 characters.";
     else message = error.message;
-    
+
     document.getElementById("signup-output").innerText = message;
   }
+});
+// Load bus routes into signup dropdown
+async function loadSignupRoutes() {
+  try {
+    const response = await fetch("http://localhost:8000/routes");
+    const routes = await response.json();
+
+    const select = document.getElementById("bus_route");
+    if (!select) return;
+
+    select.innerHTML = '<option value="">--Select Route--</option>';
+
+    routes.forEach(route => {
+      const option = document.createElement("option");
+      option.value = route.route_id;      // store the document ID
+      option.textContent = `${route.route_no} → ${route.destination}`;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading signup routes:", error);
+  }
+}
+
+// Call this when signup page loads
+document.addEventListener("DOMContentLoaded", loadSignupRoutes);
+
+
+// Toast notifications utility
+function showToast(title, description, type = 'info') {
+  const toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    // Create toast container if it doesn't exist
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    `;
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.style.cssText = `
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-card);
+    max-width: 300px;
+    color: var(--foreground);
+  `;
+
+  toast.innerHTML = `
+    <div class="toast-title" style="font-weight: bold; margin-bottom: 0.5rem;">${title}</div>
+    <div class="toast-description">${description}</div>
+  `;
+
+  const container = document.getElementById('toast-container');
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+// DRIVER PORTAL FUNCTIONALITY
+
+// 🔹 Function to fetch and render stops for the driver's route
+
+
+// ===== FETCH AND RENDER STOPS =====
+async function renderDriverStops() {
+  const tripsDiv = document.getElementById("driver-trip-list");
+  if (!tripsDiv) return;
+
+  tripsDiv.innerHTML = "<h2>Your trips today</h2>";
+
+  const routeId = localStorage.getItem("selectedRouteId");
+  console.log("routeId:", routeId);
+
+  if (!routeId) {
+    tripsDiv.innerHTML += "<p>No route found. Please log in again.</p>";
+    return;
+  }
+
+  try {
+    const res = await fetch(`/stops/${routeId}`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const stops = await res.json();
+
+    if (!stops || stops.length === 0) {
+      tripsDiv.innerHTML += "<p>No stops found for this route.</p>";
+      return;
+    }
+
+    currentStops = stops; // save globally
+    currentStopIndex = 0;
+
+    const ul = document.createElement("ul");
+    ul.style.listStyle = "none";
+    ul.style.padding = "0";
+    tripsDiv.appendChild(ul);
+
+    updateStopsView();
+
+  } catch (err) {
+    console.error("Error fetching stops:", err);
+    tripsDiv.innerHTML += `<p>Error loading stops: ${err.message}</p>`;
+  }
+}
+
+// ===== UPDATE STOPS UI =====
+function updateStopsView() {
+  const ul = document.querySelector("#driver-trip-list ul");
+  if (!ul) return;
+
+  ul.innerHTML = "";
+
+  currentStops.forEach((stop, index) => {
+    const li = document.createElement("li");
+    li.textContent = stop.stop_name;
+    li.style.padding = "0.5rem";
+    li.style.marginBottom = "0.25rem";
+    li.style.borderRadius = "var(--radius)";
+    li.style.backgroundColor = index === currentStopIndex ? "var(--success)" : "var(--muted)";
+    li.style.color = index === currentStopIndex ? "white" : "var(--foreground)";
+    li.style.fontWeight = index === currentStopIndex ? "bold" : "normal";
+    ul.appendChild(li);
+  });
+
+  if (delayMessage) delayMessage.textContent = "";
+  if (delayReasonSelect) delayReasonSelect.value = "";
+}
+
+// ===== MARK STOP DEPARTED =====
+async function sendStopStatus(stop, status, reason = null) {
+  const routeId = localStorage.getItem("selectedRouteId");
+  const driverUid = localStorage.getItem("driverUid"); // or wherever you store UID
+  const timestamp = new Date().toISOString();
+
+  const payload = {
+    driver_uid: driverUid,
+    route_id: routeId,
+    stop_id: stop.stop_id,
+    status: status,
+    timestamp: timestamp
+  };
+  
+  if (reason) payload.reason = reason;
+
+  try {
+    const res = await fetch("/driver/update-stop-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to update stop status", err);
+    throw err;
+  }
+}
+
+// ===== Mark Departed =====
+departedBtn.addEventListener("click", async () => {
+  if (currentStops.length === 0 || currentStopIndex >= currentStops.length) return;
+
+  const stop = currentStops[currentStopIndex];
+  try {
+    await sendStopStatus(stop, "departed");
+    showToast("Stop Departed", `Departed from ${stop.stop_name}`, "success");
+    currentStopIndex++;
+    if (currentStopIndex < currentStops.length) updateStopsView();
+    else {
+      showToast("Trip Completed", "All stops completed!", "success");
+      currentStops = [];
+      currentStopIndex = 0;
+      document.getElementById("driver-trip-list").innerHTML = "<h2>Your trips today</h2>";
+    }
+  } catch { /* already logged */ }
+});
+
+// ===== Flag Delay =====
+delayFlagBtn.addEventListener("click", async () => {
+  const reason = delayReasonSelect.value;
+  if (!reason) {
+    delayMessage.textContent = "Please select a reason for the delay.";
+    showToast("Selection Required", "Please select a delay reason.", "warning");
+    return;
+  }
+  
+  const stop = currentStops[currentStopIndex];
+  try {
+    await sendStopStatus(stop, "delayed", reason);
+    delayMessage.textContent = `Delay reported: ${reason}`;
+    showToast("Delay Reported", `Delay reason: ${reason}`, "warning");
+  } catch { /* already logged */ }
+});
+
+// ===== SHOW DRIVER PAGE =====
+function showDriverPage() {
+  document.getElementById("driver-page").classList.remove("hidden");
+  renderDriverStops();
+}
+
+
+// PASSENGER PORTAL FUNCTIONALITY
+
+// Data for routes, stops, and buses with coordinates
+const routeStops = {
+  'Route 1': ['Stop A1', 'Stop A2', 'Stop A3'],
+  'Route 2': ['Stop B1', 'Stop B2', 'Stop B3'],
+  'Route 3': ['Stop C1', 'Stop C2', 'Stop C3'],
+};
+
+// Stop locations with coordinates (latitude, longitude)
+const stopLocations = {
+  'Stop A1': { lat: 12.9716, lng: 77.5946, address: 'MG Road, Bengaluru' },
+  'Stop A2': { lat: 12.9698, lng: 77.6002, address: 'Brigade Road, Bengaluru' },
+  'Stop A3': { lat: 12.9760, lng: 77.6026, address: 'Commercial Street, Bengaluru' },
+  'Stop B1': { lat: 12.9352, lng: 77.6245, address: 'Koramangala, Bengaluru' },
+  'Stop B2': { lat: 12.9279, lng: 77.6271, address: 'BTM Layout, Bengaluru' },
+  'Stop B3': { lat: 12.9165, lng: 77.6101, address: 'JP Nagar, Bengaluru' },
+  'Stop C1': { lat: 12.9831, lng: 77.5957, address: 'Cubbon Park, Bengaluru' },
+  'Stop C2': { lat: 12.9979, lng: 77.5910, address: 'Vidhana Soudha, Bengaluru' },
+  'Stop C3': { lat: 13.0067, lng: 77.5818, address: 'Malleswaram, Bengaluru' },
+};
+
+const stopBuses = {
+  'Stop A1': [{name: 'Bus Alpha', number: 'A101', timings: '9:00 AM - 5:00 PM'}],
+  'Stop A2': [{name: 'Bus Alpha', number: 'A101', timings: '9:00 AM - 5:00 PM'}, {name: 'Bus Beta', number: 'A102', timings: '10:00 AM - 6:00 PM'}],
+  'Stop A3': [{name: 'Bus Gamma', number: 'A103', timings: '8:00 AM - 4:00 PM'}],
+  'Stop B1': [{name: 'Bus Delta', number: 'B201', timings: '7:00 AM - 3:00 PM'}],
+  'Stop B2': [{name: 'Bus Delta', number: 'B201', timings: '7:00 AM - 3:00 PM'}, {name: 'Bus Epsilon', number: 'B202', timings: '11:00 AM - 7:00 PM'}],
+  'Stop B3': [{name: 'Bus Zeta', number: 'B203', timings: '12:00 PM - 8:00 PM'}],
+  'Stop C1': [{name: 'Bus Eta', number: 'C301', timings: '6:00 AM - 2:00 PM'}],
+  'Stop C2': [{name: 'Bus Theta', number: 'C302', timings: '1:00 PM - 9:00 PM'}],
+  'Stop C3': [{name: 'Bus Iota', number: 'C303', timings: '3:00 PM - 11:00 PM'}],
+};
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+}
+
+// Get user's current location and find nearby stops
+function useMyLocation() {
+  const busListDiv = document.getElementById('bus-list');
+  
+  if (!navigator.geolocation) {
+    showToast('Location Error', 'Geolocation is not supported by this browser.', 'error');
+    return;
+  }
+
+  // Show loading message
+  if (busListDiv) {
+    busListDiv.innerHTML = `
+      <div style="text-align: center; padding: 2rem; color: var(--primary);">
+        <div style="margin-bottom: 1rem;">Getting your location...</div>
+        <div style="color: var(--muted-foreground); font-size: 0.9rem;">Please allow location access when prompted</div>
+      </div>
+    `;
+  }
+
+  showToast('Location Request', 'Getting your current location...', 'info');
+
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+      
+      showNearbyStops(userLat, userLng);
+    },
+    function(error) {
+      let errorMessage = 'Unable to get your location.';
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'Location access denied by user.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'Location information is unavailable.';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'Location request timed out.';
+          break;
+      }
+      
+      showToast('Location Error', errorMessage, 'error');
+      
+      if (busListDiv) {
+        busListDiv.innerHTML = `
+          <div style="text-align: center; padding: 2rem; color: var(--destructive);">
+            <div style="margin-bottom: 1rem;">${errorMessage}</div>
+            <div style="color: var(--muted-foreground); font-size: 0.9rem;">Please try again or select route and stop manually</div>
+          </div>
+        `;
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    }
+  );
+}
+
+// Show nearby stops based on user's location
+function showNearbyStops(userLat, userLng) {
+  const busListDiv = document.getElementById('bus-list');
+  
+  // Calculate distances to all stops
+  const stopsWithDistance = [];
+  
+  Object.entries(stopLocations).forEach(([stopName, location]) => {
+    const distance = calculateDistance(userLat, userLng, location.lat, location.lng);
+    stopsWithDistance.push({
+      name: stopName,
+      distance: distance,
+      address: location.address,
+      buses: stopBuses[stopName] || []
+    });
+  });
+
+  // Sort by distance
+  stopsWithDistance.sort((a, b) => a.distance - b.distance);
+  
+  // Show nearest stops (within 5km)
+  const nearbyStops = stopsWithDistance.filter(stop => stop.distance <= 5);
+  
+  if (nearbyStops.length === 0) {
+    if (busListDiv) {
+      busListDiv.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: var(--warning);">
+          <div style="margin-bottom: 1rem;">No bus stops found within 5km</div>
+          <div style="color: var(--muted-foreground); font-size: 0.9rem;">Try using manual route and stop selection</div>
+        </div>
+      `;
+    }
+    showToast('No Nearby Stops', 'No bus stops found within 5km of your location.', 'warning');
+    return;
+  }
+
+  // Display nearby stops with buses
+  let html = `
+    <div style="margin-top: 1rem;">
+      <h3 style="margin-bottom: 1rem; color: var(--primary); text-align: center;">
+        Nearby Bus Stops (${nearbyStops.length} found)
+      </h3>
+  `;
+
+  nearbyStops.forEach((stop, index) => {
+    const distanceText = stop.distance < 1 ? 
+      `${Math.round(stop.distance * 1000)}m away` : 
+      `${stop.distance.toFixed(1)}km away`;
+
+    html += `
+      <div style="
+        margin-bottom: 1.5rem; 
+        padding: 1.5rem; 
+        background: var(--card); 
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-card);
+        ${index === 0 ? 'border-left: 4px solid var(--success);' : ''}
+      ">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+          <div>
+            <h4 style="color: var(--primary); margin: 0; font-size: 1.2rem;">
+              ${stop.name}${index === 0 ? ' (Closest)' : ''}
+            </h4>
+            <div style="color: var(--muted-foreground); font-size: 0.9rem; margin-top: 0.25rem;">
+              ${stop.address}
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="color: var(--accent); font-weight: 600; font-size: 0.9rem;">
+              ${distanceText}
+            </div>
+          </div>
+        </div>
+    `;
+
+    if (stop.buses.length > 0) {
+      html += `<div style="margin-top: 1rem;">
+        <div style="color: var(--success); font-weight: 600; margin-bottom: 0.5rem;">Available Buses:</div>
+      `;
+      
+      stop.buses.forEach(bus => {
+        html += `
+          <div style="
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 0.75rem; 
+            margin-bottom: 0.5rem;
+            background: var(--muted); 
+            border-radius: calc(var(--radius) * 0.5);
+            border-left: 3px solid var(--primary);
+          ">
+            <div>
+              <strong style="color: var(--primary);">${bus.name}</strong>
+              <span style="color: var(--muted-foreground); margin-left: 0.5rem;">(${bus.number})</span>
+            </div>
+            <div style="color: var(--accent); font-size: 0.85rem; font-weight: 500;">
+              ${bus.timings}
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+    } else {
+      html += `
+        <div style="color: var(--warning); font-style: italic; margin-top: 1rem;">
+          No buses currently available at this stop
+        </div>
+      `;
+    }
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+
+  if (busListDiv) {
+    busListDiv.innerHTML = html;
+  }
+
+  showToast('Nearby Stops Found', `Found ${nearbyStops.length} stops near your location`, 'success');
+}
+
+// Show specific subpage in the passenger portal
+function showPassengerSubPage(page) {
+  ['options', 'findBus', 'report'].forEach(p => {
+    const el = document.getElementById(
+      p === 'options' ? 'passenger-options-page' :
+      p === 'findBus' ? 'find-bus-page' : 'report-page'
+    );
+    if(el) {
+      if(p === page) el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    }
+  });
+}
+// Populate routes on page load
+async function loadRoutes() {
+  try {
+    const response = await fetch("http://localhost:8000/routes"); 
+    const routes = await response.json();
+
+    const select = document.getElementById("find-route-select");
+    select.innerHTML = '<option value="">--Choose Route--</option>';
+
+    routes.forEach(route => {
+      const option = document.createElement("option");
+      option.value = route.route_id;
+      option.textContent = `${route.route_no} → ${route.destination}`;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading routes:", error);
+  }
+}
+
+// Populate stops for selected route
+async function populateFindStops() {
+  const routeId = document.getElementById("find-route-select").value;
+  const stopSelect = document.getElementById("find-stop-select");
+
+  // Reset stops dropdown
+  stopSelect.innerHTML = '<option value="">--Choose Stop--</option>';
+
+  if (!routeId) return; // no route selected
+
+  try {
+    const response = await fetch(`http://localhost:8000/stops/${routeId}`);
+    const stops = await response.json();
+
+    stops.forEach(stop => {
+      const option = document.createElement("option");
+      option.value = stop.stop_id;
+      option.textContent = stop.stop_name;
+      stopSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading stops:", error);
+  }
+}
+
+// Init on page load
+document.addEventListener("DOMContentLoaded", () => {
+  loadRoutes();
+});
+
+
+// Populate stops for Report based on route
+async function populateReportStops() {
+  const routeSelect = document.getElementById("report-route-select");
+  const stopSelect = document.getElementById("report-stop-select");
+
+  const routeId = routeSelect.value;
+
+  // Reset stops dropdown
+  stopSelect.innerHTML = '<option value="">--Choose Stop--</option>';
+
+  if (!routeId) return; // no route selected
+
+  try {
+    const response = await fetch(`http://localhost:8000/stops/${routeId}`);
+    const stops = await response.json();
+
+    stops.forEach(stop => {
+      const option = document.createElement("option");
+      option.value = stop.stop_id;
+      option.textContent = stop.stop_name;
+      stopSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading stops for report:", error);
+  }
+}
+
+// Populate report routes on page load
+async function loadReportRoutes() {
+  try {
+    const response = await fetch("http://localhost:8000/routes");
+    const routes = await response.json();
+
+    const routeSelect = document.getElementById("report-route-select");
+    routeSelect.innerHTML = '<option value="">--Choose Route--</option>';
+
+    routes.forEach(route => {
+      const option = document.createElement("option");
+      option.value = route.route_id;
+      option.textContent = `${route.route_no} → ${route.destination}`;
+      routeSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading report routes:", error);
+  }
+}
+
+// Initialize report page 
+document.addEventListener("DOMContentLoaded", () => {
+  loadReportRoutes();
+});
+
+
+
+async function findMyBus() {
+  const stopSelect = document.getElementById('find-stop-select');
+  const busListDiv = document.getElementById('bus-list');
+
+  if (!stopSelect || !busListDiv) {
+    showToast('Error', 'Required elements not found!', 'error');
+    return;
+  }
+
+  const stop = stopSelect.value;
+  if (!stop) {
+    busListDiv.innerHTML = '<p style="color: var(--warning); padding: 1rem; text-align: center;">Please select a stop.</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/upcoming_trips/${stop}`);
+    const buses = await res.json();
+
+    if (buses.length === 0) {
+      busListDiv.innerHTML = '<p style="color: var(--muted-foreground); padding: 1rem; text-align: center;">No upcoming buses.</p>';
+      return;
+    }
+
+    // Render table of ETAs
+    let html = `
+      <div style="margin-top: 1rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--primary);">Upcoming Buses:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr style="background: var(--card); color: var(--primary);">
+            <th style="padding: 0.5rem; text-align: left;">Trip</th>
+            <th style="padding: 0.5rem;">Scheduled</th>
+            <th style="padding: 0.5rem;">Predicted ETA</th>
+            <th style="padding: 0.5rem;">Delay</th>
+          </tr>
+    `;
+    buses.forEach(bus => {
+      html += `
+        <tr style="border-top: 1px solid var(--border);">
+          <td style="padding: 0.5rem;">${bus.trip_id}</td>
+          <td style="padding: 0.5rem;">${bus.scheduled_arrival}</td>
+          <td style="padding: 0.5rem;">${bus.predicted_eta_time}</td>
+          <td style="padding: 0.5rem; color: ${bus.predicted_delay > 0 ? 'red' : 'green'};">
+            ${bus.predicted_delay > 0 ? '+' + bus.predicted_delay : 'On Time'}
+          </td>
+        </tr>
+      `;
+    });
+    html += '</table></div>';
+    busListDiv.innerHTML = html;
+
+    showToast('Buses Found', `Found ${buses.length} bus(es) for ${stop}`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Error', 'Failed to fetch bus info.', 'error');
+  }
+}
+
+// Submit report button clicked
+async function submitReport() {
+  const routeSelect = document.getElementById('report-route-select');
+  const stopSelect = document.getElementById('report-stop-select');
+  const statusInput = document.querySelector('input[name="status-report"]:checked');
+
+  if (!routeSelect || !stopSelect || !statusInput) {
+    showToast('Form Error', 'Required form elements not found.', 'error');
+    return;
+  }
+
+  const route = routeSelect.value;
+  const stop = stopSelect.value;
+  const status = statusInput.value;
+
+  if (!route || !stop || !status) {
+    showToast('Incomplete Form', 'Please fill out all report fields.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch('/driver/update-stop-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        driver_uid: "passenger",   // static string
+        route_id: route,
+        stop_id: stop,
+        status: status.toLowerCase(),
+        timestamp: new Date().toISOString()
+      })
+    });
+
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+
+    showToast('Report Submitted', `Route: ${route}, Stop: ${stop}, Status: ${status}`, 'success');
+  } catch (err) {
+    console.error("Error submitting passenger report:", err);
+    showToast('Error', 'Failed to submit report. Try again.', 'error');
+  }
+
+  // Reset form
+  routeSelect.value = '';
+  stopSelect.innerHTML = '<option value="">--Choose Stop--</option>';
+  const onTimeRadio = document.querySelector('input[name="status-report"][value="On Time"]');
+  if (onTimeRadio) onTimeRadio.checked = true;
+}
+
+// Initialize functionality when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  renderDriverTripList();
 });

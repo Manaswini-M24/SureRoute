@@ -8,7 +8,7 @@
     name="description"
     content="SureRoute provides real-time bus tracking, AI-powered predictions, and instant notifications for reliable public transportation. Track your bus, report delays, and stay informed."
   />
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
   <!-- Navigation -->
@@ -51,7 +51,7 @@
         </a>
 
         <div class="nav-buttons">
-          <a class="nav-btn" id="home-btn" href='{{url_for("home")}}'>
+          <a class="nav-btn" id="home-btn" href='/'>
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -62,7 +62,7 @@
             </svg>
             Home
           </a>
-          <a class="nav-btn" id="driver-btn" href="{{url_for('driver')}}">
+          <a class="nav-btn" id="driver-btn" onclick="openAccountModal()">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -75,7 +75,7 @@
             </svg>
             Driver Portal
           </a>
-          <a class="nav-btn" id="passenger-btn" href="{{url_for('passenger')}}">
+          <a class="nav-btn" id="passenger-btn" href="/passenger">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -120,7 +120,7 @@
                 </svg>
                 Passenger Portal
               </a>
-              <a class="btn-secondary" href="{{url_for('driver')}}">
+              <a class="btn-secondary" onclick="openAccountModal()">
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2" />
                   <circle cx="9" cy="7" r="4" stroke-width="2" />
@@ -197,166 +197,7 @@
     </section>
   </div>
 
-  <!-- Driver Portal -->
-  <div id="driver-page" class="page hidden">
-    <main class="portal-main">
-      <div class="portal-container">
-        <h1 class="portal-title">Driver Portal</h1>
-        <!-- Status Display -->
-        <div class="status-card">
-          <div class="status-header">
-            <h2>Route Status</h2>
-            <div class="live-indicator">
-              <span class="live-dot"></span>
-              <span class="live-text">LIVE</span>
-            </div>
-          </div>
-          <div class="status-badge" id="driver-status">
-            <svg
-              class="status-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <path
-                d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-                stroke-width="2"
-              />
-              <path d="m9 12 2 2 4-4" stroke-width="2" />
-            </svg>
-            <span>On Time</span>
-          </div>
-          <p class="status-time">
-            Last updated: <span id="driver-last-updated">Just now</span>
-          </p>
-        </div>
-        <!-- Action Buttons -->
-        <div class="action-section">
-          <h3>Quick Actions</h3>
-          <div class="action-buttons">
-            <button class="action-btn success" onclick="updateDriverStatus('arrived')">
-              <svg
-                class="action-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2" />
-                <circle cx="12" cy="10" r="3" stroke-width="2" />
-              </svg>
-              ARRIVED
-            </button>
-            <button class="action-btn primary" onclick="updateDriverStatus('departed')">
-              <svg
-                class="action-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M8 3l4 8 5-8h5l-9 10v8l-4-3-4 3v-8l-9-10h5z" stroke-width="2" />
-              </svg>
-              DEPARTED
-            </button>
-          </div>
-        </div>
-        <!-- Activity Log -->
-        <div class="activity-card">
-          <h3>Recent Activity</h3>
-          <div class="activity-log" id="activity-log">
-            <div class="activity-item">
-              <span class="activity-time">Just now</span>
-              <span class="activity-text">Route started</span>
-              <span class="activity-type driver">Driver</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
 
-  <!-- Passenger Portal -->
-  <div id="passenger-page" class="page hidden">
-    <main class="portal-main">
-      <div class="portal-container">
-        <h1 class="portal-title">Passenger Portal</h1>
-        <!-- Bus Status -->
-        <div class="status-card">
-          <div class="status-header">
-            <h2>Bus Status</h2>
-            <div class="live-indicator">
-              <span class="live-dot"></span>
-              <span class="live-text">LIVE</span>
-            </div>
-          </div>
-          <div class="status-badge" id="passenger-status">
-            <svg
-              class="status-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <path
-                d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-                stroke-width="2"
-              />
-              <path d="m9 12 2 2 4-4" stroke-width="2" />
-            </svg>
-            <span>On Time</span>
-          </div>
-          <p class="eta">ETA: <span id="passenger-eta">5 minutes</span></p>
-          <p class="status-time">
-            Last updated: <span id="passenger-last-updated">Just now</span>
-          </p>
-        </div>
-        <!-- Report Buttons -->
-        <div class="action-section">
-          <h3>Report Issue</h3>
-          <div class="action-buttons">
-            <button class="action-btn warning" onclick="reportIssue('delay')">
-              <svg
-                class="action-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-                  stroke-width="2"
-                />
-                <path d="M12 9v4" stroke-width="2" />
-                <path d="m12 17 .01 0" stroke-width="2" />
-              </svg>
-              REPORT DELAY
-            </button>
-            <button class="action-btn destructive" onclick="reportIssue('missed')">
-              <svg
-                class="action-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M3 6h18l-2 13H5L3 6Z" stroke-width="2" />
-                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-width="2" />
-                <path d="m10 11 4 4" stroke-width="2" />
-                <path d="m14 11-4 4" stroke-width="2" />
-              </svg>
-              MISSED BUS
-            </button>
-          </div>
-        </div>
-        <!-- Notifications -->
-        <div class="notifications-card">
-          <h3>Recent Notifications</h3>
-          <div class="notifications-list" id="notifications-list">
-            <div class="notification-item">
-              <span class="notification-time">Just now</span>
-              <span class="notification-text">Bus tracking started</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
 
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
@@ -381,7 +222,11 @@
         <input type="password" class="modal-input" placeholder="Password" name="password" required />
         <input type="text" class="modal-input" placeholder="Bus Name" name="bus_name" required />
         <input type="text" class="modal-input" placeholder="Bus Number" name="bus_number" required />
-        <input type="text" class="modal-input" placeholder="Bus Route" name="bus_route" required />
+        <label for="bus_route">Bus Route:</label>
+<select id="bus_route" name="bus_route" class="modal-input" required>
+  <option value="">--Select Route--</option>
+</select>
+
         <input type="text" class="modal-input" placeholder="Timings (e.g. 9 AM - 5 PM)" name="bus_timings" required />
         <button type="submit" class="btn-primary modal-btn">Sign Up</button>
       </form>
@@ -394,8 +239,9 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="/static/firebase.js"></script>
-<script src="/static/script.js"></script>
-
+<!-- <script src="/static/firebase.js"></script> -->
+<script src="{{ url_for('static', path='script.js') }}" defer></script>
+<script src="{{ url_for('static', path='firebase.js') }}" defer></script>
+<!-- <script src="{{ url_for('static', path='script1.js') }}" defer></script> -->
 </body>
 </html>

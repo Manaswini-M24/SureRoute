@@ -5,12 +5,13 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 from backend.routes_api import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from datetime import datetime,timezone,timedelta
 import backend.firebase_init as firebase_init
 from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
 import requests
 import json
+import joblib
 app = FastAPI()
 origins = [
     "http://127.0.0.1:8000",
@@ -33,7 +34,9 @@ class PredictRequest(BaseModel):
     delay_prev_stop: float
     day: str
     time_of_day: str
-
+def load_model():
+    global model
+    model=joblib.load("ai_services/model_trianing/xgboost_eta_model.pkl")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class=HTMLResponse)
@@ -96,36 +99,58 @@ def time_string_to_minutes(time_str: str) -> float:
         print(f"Error parsing time string '{time_str}': {e}")
         return 0.0
 
+
+
+from datetime import datetime, date
+
 def calculate_delay_previous_stop(route_id: str, current_stop_id: str, trip_id: str):
     """
     Calculate delay at previous stop for the given trip.
-    This is a placeholder - you'll need to implement the actual logic.
+    Uses scheduled arrival and last_updated fields from Firestore.
     """
     try:
-        # TODO: Implement actual logic to:
-        # 1. Find the previous stop in the route sequence
-        # 2. Get the actual arrival time at that stop for this trip
-        # 3. Compare with scheduled time to calculate delay
-        
-        # For now, return a placeholder value
-        # You might need to query your trip tracking/GPS data here
-        
-        # Placeholder logic - replace with actual implementation
-        delay = 0.0  # Default to no delay
-        
-        # Example logic structure (implement based on your data):
-        # previous_stop = get_previous_stop_in_route(route_id, current_stop_id)
-        # if previous_stop:
-        #     actual_time = get_actual_arrival_time(trip_id, previous_stop['stop_id'])
-        #     scheduled_time = previous_stop.get('arrival')
-        #     if actual_time and scheduled_time:
-        #         delay = calculate_time_difference(actual_time, scheduled_time)
-        
-        return delay
-        
+        # 1️⃣ Find previous stop
+        stops_ref = db.collection("route_data").document(route_id).collection("stops")
+        stops_docs = list(stops_ref.stream())
+        stops_docs.sort(key=lambda d: d.id)  # Assuming doc ids are stop_1, stop_2, etc.
+
+        prev_stop_doc = None
+        for i, doc in enumerate(stops_docs):
+            if doc.id == current_stop_id and i > 0:
+                prev_stop_doc = stops_docs[i-1]
+                break
+
+        if not prev_stop_doc:
+            return 0.0  # No previous stop
+
+        prev_data = prev_stop_doc.to_dict() or {}
+
+        scheduled_time_str = prev_data.get("scheduled_arrival")  # e.g., '07:00'
+        actual_time_str = prev_data.get("last_updated")          # e.g., '2025-09-15T07:05:00'
+
+        if not scheduled_time_str:
+            return 0.0
+
+        # 2️⃣ Parse scheduled time (combine with today’s date)
+        today = date.today()
+        scheduled_dt = datetime.strptime(scheduled_time_str, "%H:%M")
+        scheduled_dt = datetime.combine(today, scheduled_dt.time())
+
+        # 3️⃣ Parse actual time if exists
+        if actual_time_str:
+            # Remove Z if present
+            actual_time_str = actual_time_str.replace("Z", "")
+            actual_dt = datetime.fromisoformat(actual_time_str)
+            delay_minutes = (actual_dt - scheduled_dt).total_seconds() / 60.0
+        else:
+            delay_minutes = 0.0
+
+        return delay_minutes
+
     except Exception as e:
         print(f"Error calculating delay for trip {trip_id}: {e}")
         return 0.0
+
 
 def get_upcoming_trips_for_stops(stops: list) -> list:
     """
@@ -151,11 +176,31 @@ def get_upcoming_trips_for_stops(stops: list) -> list:
     # Sort by arrival time and limit to 5
     upcoming_trips.sort(key=lambda x: time_string_to_minutes(x.get('arrival', '00:00')))
     return upcoming_trips[:5]
-
+def run_model_prediction(prediction_request: dict) -> dict:
+    """
+    Run the ML model directly instead of making an API call.
+    """
+    # Extract features from the request
+    features = [
+        prediction_request["delay_prev_stop"],
+        prediction_request["day"],
+        prediction_request["time_of_day"],
+        # add more features if your model expects them
+    ]
+    
+    # Get prediction
+    predicted_delay = model.predict([features])[0]
+    
+    # Compute ETA = scheduled + delay
+    predicted_eta_time = prediction_request["scheduled_arrival"] + predicted_delay
+    
+    return {
+        "trip_id": prediction_request["trip_id"],
+        "predicted_eta_time": predicted_eta_time,
+        "predicted_delay": float(predicted_delay),
+        "model_version": "v1.0"
+    }
 async def make_eta_prediction(trip_data: dict) -> dict:
-    """
-    Make ETA prediction using your existing API
-    """
     try:
         # Get current day and time_of_day
         day, time_of_day = get_current_time_info()
@@ -171,20 +216,14 @@ async def make_eta_prediction(trip_data: dict) -> dict:
         prediction_request = {
             "trip_id": trip_data.get('trip_id', f"trip_{trip_data['route_id']}"),
             "stop_id": trip_data['stop_id'],
-            "scheduled_arrival": trip_data['arrival'],  # Your API handles time conversion
+            "scheduled_arrival": trip_data['arrival'],
             "delay_prev_stop": delay_prev_stop,
             "day": day,
             "time_of_day": time_of_day
         }
         
-        # Make request to your ETA prediction API
-        # Adjust URL based on where your ETA API is running
-        eta_api_url = "http://localhost:8000/predict_delay"  # Update this URL
-        
-        response = requests.post(eta_api_url, json=prediction_request, timeout=10)
-        response.raise_for_status()
-        
-        prediction_result = response.json()
+        # ✅ Direct model call instead of HTTP
+        prediction_result = run_model_prediction(prediction_request)
         
         # Combine original trip data with prediction
         return {
@@ -197,90 +236,98 @@ async def make_eta_prediction(trip_data: dict) -> dict:
             "model_version": prediction_result['model_version']
         }
         
-    except requests.exceptions.RequestException as e:
-        print(f"Error calling ETA API: {e}")
-        # Fallback to scheduled time
+    except Exception as e:
+        print(f"Unexpected error in ETA prediction: {e}")
+
+        # Calculate previous stop delay
+        prev_delay = calculate_delay_previous_stop(
+            route_id=trip_data['route_id'],
+            current_stop_id=trip_data['stop_id'],
+            trip_id=trip_data.get('trip_id', f"trip_{trip_data['route_id']}")
+        )
+
+        # Add delay to scheduled arrival
+        scheduled_time_str = trip_data['arrival']  # e.g., '07:12'
+        today = datetime.today().date()
+        scheduled_dt = datetime.strptime(scheduled_time_str, "%H:%M")
+        scheduled_dt = datetime.combine(today, scheduled_dt.time())
+        predicted_eta_dt = scheduled_dt + timedelta(minutes=prev_delay)
+        predicted_eta_str = predicted_eta_dt.strftime("%H:%M")
+
         return {
             "trip_id": trip_data.get('trip_id', f"trip_{trip_data['route_id']}"),
             "route_id": trip_data['route_id'],
             "stop_name": trip_data['stop_name'],
             "scheduled_arrival": trip_data['arrival'],
-            "predicted_eta_time": trip_data['arrival'],  # Fallback to scheduled
-            "predicted_delay": 0.0,
+            "predicted_eta_time": predicted_eta_str,  # scheduled + previous delay
+            "predicted_delay": prev_delay,
             "model_version": "fallback"
-        }
-    except Exception as e:
-        print(f"Unexpected error in ETA prediction: {e}")
-        return None
+        }   
+
 
 # Your main endpoint
+import re
+
 @app.get("/api/upcoming_trips/{stop_name}")
 async def get_upcoming_trips(stop_name: str):
     """
-    Get upcoming bus trips with ETA predictions for a given stop
+    Get upcoming bus trips with ETA predictions for a given stop.
+    stop_name will be like 'r42_s3' → route_42/stops/stop_3
     """
     try:
-        # Step 1: Find stop across all routes
-        stops = firebase_init.get_stop_across_routes_by_name(stop_name)
-        
-        if not stops:
+        # 🔹 Parse "r42_s3" → route_id="route_42", stop_id="stop_3"
+        match = re.match(r"r(\d+)_s(\d+)", stop_name.lower())
+        if not match:
+            raise HTTPException(status_code=400, detail="Invalid stop format. Use rXX_sYY")
+
+        route_id = f"route_{match.group(1)}"
+        stop_id = f"stop_{match.group(2)}"
+        print(f"🔎 Parsed stop_name='{stop_name}' → route_id='{route_id}', stop_id='{stop_id}'")
+
+        # 🔹 Fetch stop doc directly
+        stop_ref = firebase_init.db.collection("route_data").document(route_id).collection("stops").document(stop_id)
+        doc = stop_ref.get()
+
+        if not doc.exists:
+            print(f"⚠️ No document found for {route_id}/{stop_id}")
             return []
-        
-        # Step 2: Filter upcoming trips (max 5)
-        upcoming_trips = get_upcoming_trips_for_stops(stops)
-        
-        if not upcoming_trips:
-            return []
-        
-        # Step 3: Make ETA predictions for each trip
+
+        stop_data = doc.to_dict() or {}
+        print(f"✅ Found stop data: {stop_data}")
+
+        # 🔹 Build upcoming trips list
+        upcoming_trips = [{
+            "route_id": route_id,
+            "stop_id": stop_id,
+            "stop_name": stop_data.get("stop_name", stop_id),
+            "arrival": stop_data.get("scheduled_arrival"),
+            "departure": stop_data.get("scheduled_departure"),
+        }]
+
         predicted_trips = []
-        
         for trip in upcoming_trips:
             try:
                 prediction = await make_eta_prediction(trip)
                 if prediction:
                     predicted_trips.append(prediction)
             except Exception as e:
-                print(f"Error predicting for trip {trip}: {e}")
-                # Add fallback data
+                print(f"⚠️ ETA prediction failed for {trip}: {e}")
                 predicted_trips.append({
                     "trip_id": f"trip_{trip['route_id']}",
-                    "route_id": trip['route_id'],
-                    "stop_name": trip['stop_name'],
-                    "scheduled_arrival": trip['arrival'],
-                    "predicted_eta_time": trip['arrival'],
+                    "route_id": trip["route_id"],
+                    "stop_name": trip["stop_name"],
+                    "scheduled_arrival": trip["arrival"],
+                    "predicted_eta_time": trip["arrival"],
                     "predicted_delay": 0.0,
-                    "model_version": "error_fallback"
+                    "model_version": "fallback"
                 })
-        
+
         return predicted_trips
-        
+
     except Exception as e:
-        print(f"Error in get_upcoming_trips for '{stop_name}': {e}")
+        print(f"❌ Error in get_upcoming_trips for '{stop_name}': {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch trips for stop: {stop_name}")
 
-# Example response format that your frontend expects:
-"""
-[
-  {
-    "trip_id": "trip_001",
-    "route_id": "route_a",
-    "stop_name": "Main Street",
-    "scheduled_arrival": "14:30",
-    "predicted_eta_time": "14:35",
-    "predicted_delay": 5.2,
-    "model_version": "xgboost-v1"
-  },
-  {
-    "trip_id": "trip_002", 
-    "route_id": "route_b",
-    "stop_name": "Main Street",
-    "scheduled_arrival": "15:00",
-    "predicted_eta_time": "15:00",
-    "predicted_delay": 0.0,
-    "model_version": "rule-based-v1"
-  }
-]
-"""
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

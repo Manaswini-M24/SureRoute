@@ -7,36 +7,40 @@ import xgboost as xgb
 import joblib
 import os
 
+
 def train_ml_models():
     print("🤖 TRAINING ML MODELS...")
     print("=" * 50)
     
     try:
+        # Get the correct path dynamically
         current_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(current_dir, "..", "sureroute-eta-predictor", "prediction_logs.csv")
         
         print(f"📁 Looking for data at: {csv_path}")
+        print(f"📁 File exists: {os.path.exists(csv_path)}")
         
         if not os.path.exists(csv_path):
             print("❌ CSV file not found!")
+            print("Please generate data first by running:")
+            print("python generate_sample_data.py 100")
             return None
             
-        # ✅ FIX: Read CSV without headers and manually assign them
         df = pd.read_csv(csv_path, header=None)
-        
-        # ✅ MANUALLY SET COLUMN NAMES
         df.columns = [
             'timestamp', 'trip_id', 'stop_id', 'scheduled_arrival', 
             'delay_prev_stop', 'day', 'time_of_day', 'predicted_delay', 
             'predicted_eta', 'predicted_eta_time', 'model_version'
         ]
         
-        print("✅ Columns set:", df.columns.tolist())
         print(f"📊 Total records: {len(df)}")
         
         if len(df) < 50:
             print("❌ Need at least 50 records for ML training")
+            print(f"Current records: {len(df)}")
+            print("Generate more data with: python generate_sample_data.py 100")
             return None
+            
             
         # Prepare features and target
         X = df[['scheduled_arrival', 'delay_prev_stop']]

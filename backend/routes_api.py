@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 import backend.firebase_init as firebase_init
-
+import re
 router = APIRouter()
 
 
@@ -29,6 +29,27 @@ def stops_by_name(stop_name: str):
     data = [{"stop_id": s["stop_id"], "stop_name": s["stop_name"], "route_id": s["route_id"]} for s in stops]
     return JSONResponse(content=data)
 
+def normalize_stop_id(stop_id: str, stops_coll):
+    """Try to map r22_s15, s15, 15 → stop_15 if it exists in Firestore."""
+    # 1) If already stop_<n>, keep it
+    if re.match(r"^stop_\d+$", stop_id):
+        if stops_coll.document(stop_id).get().exists:
+            return stop_id
+
+    # 2) Extract trailing digits (s15 → 15, r22_s15 → 15)
+    m = re.search(r"(\d+)$", stop_id)
+    if m:
+        candidate = f"stop_{m.group(1)}"
+        if stops_coll.document(candidate).get().exists:
+            return candidate
+
+    # 3) Fall back: only return original if it actually exists
+    if stops_coll.document(stop_id).get().exists:
+        return stop_id
+
+    return None
+
+
 @router.post("/driver/update-stop-status")
 def update_stop_status(request: dict):
     """Update stop status (departed/delayed/on-time) from driver or passenger"""
@@ -46,23 +67,33 @@ def update_stop_status(request: dict):
             status_code=400
         )
 
-    stop_ref = firebase_init.db.collection("route_data").document(route_id).collection("stops").document(stop_id)
+    stops_coll = firebase_init.db.collection("route_data").document(route_id).collection("stops")
 
-    # Get existing stop data (so we don’t overwrite scheduled arrival/departure or static info)
+    # normalize stop_id so it points to an *existing* document
+    normalized_id = normalize_stop_id(stop_id, stops_coll)
+    if not normalized_id:
+        return JSONResponse(
+            content={"error": f"No stop document found for stop_id '{stop_id}' in route '{route_id}'"},
+            status_code=404
+        )
+
+    stop_ref = stops_coll.document(normalized_id)
+
+    # Get existing stop data (so we don’t overwrite scheduled info)
     existing_stop = stop_ref.get()
     stop_data = existing_stop.to_dict() if existing_stop.exists else {}
 
     # Update only the live-tracking fields
-    stop_ref.set({
-        "stop_name": stop_data.get("stop_name", stop_id),   # keep original name if exists
+    stop_ref.update({
+        "stop_name": stop_data.get("stop_name", normalized_id),
         "scheduled_arrival": stop_data.get("scheduled_arrival"),
         "scheduled_departure": stop_data.get("scheduled_departure"),
 
-        # Live update fields
+        # Live fields
         "status": status,
-        "timestamp": timestamp,
-        "updated_by": driver_uid,
-        "delay_reason": delay_reason if status.lower() == "delayed" else None
-    }, merge=True)
+        "last_updated": timestamp,        # ✅ overwrite the correct field
+        "last_updated_by": driver_uid,
+        "reason": delay_reason if status.lower() == "delayed" else None
+    })
 
-    return {"message": f"✅ Stop {stop_id} on {route_id} marked as {status} by {driver_uid}"}
+    return {"message": f"✅ Stop {normalized_id} on {route_id} marked as {status} by {driver_uid}"}

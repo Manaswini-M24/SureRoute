@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SureRoute - Passenger Portal</title>
   <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
-  
+   <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <!-- <link rel="stylesheet" href="/static/style1.css" /> -->
 </head>
 <body>
@@ -83,22 +87,25 @@
           
           <!-- Location-based search section -->
           <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 2rem;">
-            <h3 style="color: var(--primary); margin-bottom: 1rem; text-align: center;">
-              📍 Don't know your exact location?
-            </h3>
-            <p style="color: var(--muted-foreground); text-align: center; margin-bottom: 1.5rem; line-height: 1.6;">
-              Let us find nearby bus stops for you based on your current location
-            </p>
-            <div style="text-align: center;">
-              <button class="btn-primary" onclick="trackUserLocation()" style="background: var(--success); gap: 0.75rem;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 1.25rem; height: 1.25rem;">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
-                  <circle cx="12" cy="10" r="3" stroke-width="2"/>
-                </svg>
-                Use My Location
-              </button>
-            </div>
-          </div>
+    <h3 style="color: var(--primary); margin-bottom: 1rem; text-align: center;">
+      📍 Don't know your exact location?
+    </h3>
+    <p style="color: var(--muted-foreground); text-align: center; margin-bottom: 1.5rem; line-height: 1.6;">
+      Let us find nearby bus stops for you based on your current location
+    </p>
+    <div style="text-align: center;">
+      <button class="btn-primary" onclick="trackUserLocation()" style="background: var(--success); gap: 0.75rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 1.25rem; height: 1.25rem; margin-right: 0.5rem;">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+          <circle cx="12" cy="10" r="3" stroke-width="2"/>
+        </svg>
+        Use My Location
+      </button>
+    </div>
+  </div>
+
+  <!-- Map container -->
+  <div id="map"></div>
 
           <!-- Manual search section -->
           <div style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;">
@@ -202,6 +209,9 @@
       <button type="button" class="btn-secondary modal-btn cancel-btn" onclick="closeAccountModal()">Cancel</button>
     </div>
   </div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="{{ url_for('static', path='script.js') }}" defer></script>
   <script src="{{ url_for('static', path='map.js') }}" defer></script>
   <!-- <script src="/static/script1.js"></script> -->

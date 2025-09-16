@@ -1,16 +1,16 @@
-// ---- Firebase Config ----
-const firebaseConfig = {
-  apiKey: "AIzaSyCwhbI3PxOT6xN-KejyiuC2GrpBhkmEC8o",
-  authDomain: "driver-login-portal.firebaseapp.com",
-  projectId: "driver-login-portal",
-  storageBucket: "driver-login-portal.firebasestorage.app",
-  messagingSenderId: "54907190318",
-  appId: "1:54907190318:web:5c063f644c1e6fa876b3bf"
-};
+// // ---- Firebase Config ----
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCwhbI3PxOT6xN-KejyiuC2GrpBhkmEC8o",
+//   authDomain: "driver-login-portal.firebaseapp.com",
+//   projectId: "driver-login-portal",
+//   storageBucket: "driver-login-portal.firebasestorage.app",
+//   messagingSenderId: "54907190318",
+//   appId: "1:54907190318:web:5c063f644c1e6fa876b3bf"
+// };
 
-// Init Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// // Init Firebase
+// firebase.initializeApp(firebaseConfig);
+// const db = firebase.firestore();
 
 // ---- Initialize Leaflet Map ----
 const map = L.map('map').setView([12.9716, 77.5946], 13);
@@ -47,25 +47,20 @@ let allStops = [];
 
 // ---- Fetch Bus Stops from Firestore ----
 async function loadStops() {
-  const routesSnap = await db.collection("mangaluru_buses").get();
+  const res = await fetch("/stops");
+  const data = await res.json();
+  console.log("Stops loaded:", data.stops);
 
-  routesSnap.forEach(async (routeDoc) => {
-    const routeData = routeDoc.data();
-    const stopsSnap = await routeDoc.ref.collection("stops").get();
-
-    stopsSnap.forEach((stopDoc) => {
-      const stop = stopDoc.data();
-
-      if (stop.latitude && stop.longitude) {
-        const marker = L.marker([stop.latitude, stop.longitude], { icon: stopIcon })
-          .addTo(map)
-          .bindPopup(`<b>${stop.name}</b><br>Route ${routeData.route_no}`);
-
-        allStops.push({ ...stop, marker });
-      }
-    });
+  data.stops.forEach((stop) => {
+    if (stop.latitude && stop.longitude) {
+      L.marker([stop.latitude, stop.longitude], { icon: stopIcon })
+        .addTo(map)
+        .bindPopup(`<b>${stop.name}</b><br>Route ${stop.route_no}`);
+    }
   });
 }
+loadStops();
+
 
 // ---- Distance Calculator (Haversine) ----
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -89,12 +84,13 @@ function trackUserLocation() {
     alert("Geolocation is not supported by your browser.");
     return;
   }
-
+  console.log("trackUserLocation called");
+  console.log("Geolocation supported");
   navigator.geolocation.watchPosition(
     (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-
+      console.log("Got position:", position);
       // Update or create user marker
       if (window.userMarker) {
         window.userMarker.setLatLng([lat, lng]);

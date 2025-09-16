@@ -3,6 +3,18 @@ from fastapi.responses import JSONResponse
 import backend.firebase_init as firebase_init
 import re
 router = APIRouter()
+@router.get("/stops")
+def get_stops():
+    stops_data = []
+    buses_ref = firebase_init.db.collection("mangaluru_buses")
+    for route_doc in buses_ref.stream():
+        route_data = route_doc.to_dict()
+        stops_ref = route_doc.reference.collection("stops")
+        for stop_doc in stops_ref.stream():
+            stop = stop_doc.to_dict()
+            stop['route_no'] = route_data['route_no']
+            stops_data.append(stop)
+    return {"stops": stops_data}
 
 
 @router.get("/routes")

@@ -12,6 +12,14 @@ from pydantic import BaseModel
 import requests
 import json
 import joblib
+import os
+
+MODEL_PATH = os.path.join("ai_services", "sureroute-eta-predictor", "models", "xgboost_eta_model.pkl")
+
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"Model not found at {MODEL_PATH}. Make sure the submodule is initialized and updated.")
+ml_model = joblib.load(MODEL_PATH)
+print("✅ ML model loaded successfully:", type(ml_model))
 app = FastAPI()
 origins = [
     "http://127.0.0.1:8000",

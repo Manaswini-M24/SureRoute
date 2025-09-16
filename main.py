@@ -11,15 +11,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
 import requests
 import json
-import joblib
+import importlib.util
+import sys
 import os
 
-MODEL_PATH = os.path.join("ai_services", "sureroute-eta-predictor", "models", "xgboost_eta_model.pkl")
 
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"Model not found at {MODEL_PATH}. Make sure the submodule is initialized and updated.")
-ml_model = joblib.load(MODEL_PATH)
-print("✅ ML model loaded successfully:", type(ml_model))
+
+
+
 app = FastAPI()
 origins = [
     "http://127.0.0.1:8000",
@@ -33,7 +32,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(api_router)
+module_path = os.path.join("ai_services", "sureroute-eta-predictor", "app.py")
+spec = importlib.util.spec_from_file_location("sureroute_app", module_path)
+sureroute_app = importlib.util.module_from_spec(spec)
+sys.modules["sureroute_app"] = sureroute_app
+spec.loader.exec_module(sureroute_app)
 
+ml_model = sureroute_app.ml_model
 db = firebase_init.db
 class PredictRequest(BaseModel):
     trip_id: str
@@ -42,9 +47,7 @@ class PredictRequest(BaseModel):
     delay_prev_stop: float
     day: str
     time_of_day: str
-def load_model():
-    global model
-    model=joblib.load("ai_services/model_trianing/xgboost_eta_model.pkl")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class=HTMLResponse)
@@ -184,30 +187,66 @@ def get_upcoming_trips_for_stops(stops: list) -> list:
     # Sort by arrival time and limit to 5
     upcoming_trips.sort(key=lambda x: time_string_to_minutes(x.get('arrival', '00:00')))
     return upcoming_trips[:5]
+DAY_MAPPING = {
+    "Monday": 0,
+    "Tuesday": 1,
+    "Wednesday": 2,
+    "Thursday": 3,
+    "Friday": 4,
+    "Saturday": 5,
+    "Sunday": 6
+}
+TIME_MAPPING = {
+    "morning": 0,    # 05:00–12:00
+    "afternoon": 1,  # 12:00–17:00
+    "evening": 2,    # 17:00–21:00
+    "night": 3       # 21:00–05:00
+}
+
 def run_model_prediction(prediction_request: dict) -> dict:
-    """
-    Run the ML model directly instead of making an API call.
-    """
-    # Extract features from the request
-    features = [
-        prediction_request["delay_prev_stop"],
-        prediction_request["day"],
-        prediction_request["time_of_day"],
-        # add more features if your model expects them
-    ]
-    
-    # Get prediction
-    predicted_delay = model.predict([features])[0]
-    
-    # Compute ETA = scheduled + delay
-    predicted_eta_time = prediction_request["scheduled_arrival"] + predicted_delay
-    
+    if ml_model is None:
+        raise RuntimeError("ML model not loaded")
+
+    # Detect which model is being used
+    model_type = type(ml_model).__name__
+    n_features = getattr(ml_model, "n_features_in_", None)
+
+    print(f"✅ Using model: {model_type}, expects {n_features} features")
+
+    # Encode categorical features
+    day_encoded = DAY_MAPPING.get(prediction_request["day"], 1)
+    time_encoded = TIME_MAPPING.get(prediction_request["time_of_day"], 2)
+    scheduled_minutes = time_string_to_minutes(prediction_request["scheduled_arrival"])
+
+    # Choose features based on model
+    if n_features == 2:
+        features = [scheduled_minutes, float(prediction_request["delay_prev_stop"])]
+    elif n_features == 4:
+        features = [
+            scheduled_minutes,
+            float(prediction_request["delay_prev_stop"]),
+            day_encoded,
+            time_encoded,
+        ]
+    else:
+        raise RuntimeError(f"Unsupported model feature size: {n_features}")
+
+    predicted_delay = ml_model.predict([features])[0]
+
+    # Add delay to scheduled arrival
+    predicted_eta_minutes = scheduled_minutes + predicted_delay
+    hours, minutes = divmod(int(predicted_eta_minutes), 60)
+    predicted_eta_time = f"{hours:02d}:{minutes:02d}"
+
     return {
         "trip_id": prediction_request["trip_id"],
         "predicted_eta_time": predicted_eta_time,
         "predicted_delay": float(predicted_delay),
-        "model_version": "v1.0"
+        "model_version": "v1.0",
+        "model_used": model_type,         # 👈 Added field
+        "features_expected": n_features   # 👈 Added field
     }
+
 async def make_eta_prediction(trip_data: dict) -> dict:
     try:
         # Get current day and time_of_day

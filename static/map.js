@@ -115,6 +115,7 @@ function trackUserLocation() {
           stop.marker.bindPopup(
             `<b>${stop.name}</b><br>Route ${stop.route_no || ''}<br>🚏 Nearby Stop (${Math.round(dist)} m)`
           );
+          console.log("allStops length:", allStops ? allStops.length : "undefined");
         } else {
           stop.marker.setIcon(stopIcon); // reset to normal
         }
@@ -129,5 +130,30 @@ function trackUserLocation() {
 }
 
 // ---- Run Everything ----
-loadStops();
-trackUserLocation();
+// loadStops();
+// trackUserLocation();
+// Button click → show map + init + call your existing function
+document.getElementById("use-location").addEventListener("click", () => {
+    const el = document.getElementById("map");
+    
+    // Show map container properly
+    el.style.display = "block";
+    el.style.height = "400px";
+    el.style.width = "100%";
+    
+    // Only initialize once
+    if (!window.map) {
+        window.map = L.map("map");
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(window.map);
+    }
+    
+    // 🔑 Multiple invalidateSize calls with longer delay
+   // after the div is visible
+setTimeout(() => map.invalidateSize(), 50);
+
+    
+    // Start tracking location
+    trackUserLocation();
+});

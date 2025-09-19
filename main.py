@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request,HTTPException
-from fastapi.responses import HTMLResponse,JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
@@ -9,16 +9,10 @@ from datetime import datetime,timezone,timedelta
 import backend.firebase_init as firebase_init
 from apscheduler.schedulers.background import BackgroundScheduler
 from pydantic import BaseModel
-import requests
-import json
 import importlib.util
 import sys
 import os
-
-
-
-
-
+import re
 app = FastAPI()
 origins = [
     "http://127.0.0.1:8000",
@@ -26,11 +20,12 @@ origins = [
 ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # or ["*"] for all origins (dev only)
+    allow_origins=origins,  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.include_router(api_router)
 module_path = os.path.join("ai_services", "sureroute-eta-predictor", "app.py")
 spec = importlib.util.spec_from_file_location("sureroute_app", module_path)
@@ -120,7 +115,7 @@ def calculate_delay_previous_stop(route_id: str, current_stop_id: str, trip_id: 
     Uses scheduled arrival and last_updated fields from Firestore.
     """
     try:
-        # 1️⃣ Find previous stop
+        # Find previous stop
         stops_ref = db.collection("route_data").document(route_id).collection("stops")
         stops_docs = list(stops_ref.stream())
         stops_docs.sort(key=lambda d: d.id)  # Assuming doc ids are stop_1, stop_2, etc.
@@ -142,12 +137,12 @@ def calculate_delay_previous_stop(route_id: str, current_stop_id: str, trip_id: 
         if not scheduled_time_str:
             return 0.0
 
-        # 2️⃣ Parse scheduled time (combine with today’s date)
+        #PParse scheduled time (combine with today’s date)
         today = date.today()
         scheduled_dt = datetime.strptime(scheduled_time_str, "%H:%M")
         scheduled_dt = datetime.combine(today, scheduled_dt.time())
 
-        # 3️⃣ Parse actual time if exists
+        # Parse actual time if exists
         if actual_time_str:
             # Remove Z if present
             actual_time_str = actual_time_str.replace("Z", "")
@@ -163,9 +158,26 @@ def calculate_delay_previous_stop(route_id: str, current_stop_id: str, trip_id: 
         return 0.0
 
 
+def normalize_stop_id(stop_id: str) -> str:
+    """
+    Normalize stop_id to a consistent format.
+    Accepts things like r1a_s18, r01_s18, etc.
+    """
+    if not stop_id:
+        return stop_id
+    
+    parts = stop_id.split("_")
+    if len(parts) == 2 and parts[0].startswith("r") and parts[1].startswith("s"):
+        route = parts[0][1:]   # after "r"
+        stop = parts[1][1:]    # after "s"
+        return f"r{route}_s{stop}"
+    
+    return stop_id  # leave unchanged if unexpected format
+
 def get_upcoming_trips_for_stops(stops: list) -> list:
     """
-    Filter upcoming trips (max 5) where scheduled arrival > current time
+    Filter upcoming trips (max 5) where scheduled arrival > current time.
+    Handles late-night/early-morning rollover.
     """
     current_time = datetime.now().time()
     current_minutes = current_time.hour * 60 + current_time.minute
@@ -173,7 +185,10 @@ def get_upcoming_trips_for_stops(stops: list) -> list:
     upcoming_trips = []
     
     for stop in stops:
-        arrival_time = stop.get('arrival')
+        # Normalize stop_id so formats like r1a_s18 won't break
+        stop["stop_id"] = normalize_stop_id(stop.get("stop_id", ""))
+        
+        arrival_time = stop.get("arrival")
         if not arrival_time:
             continue
             
@@ -181,12 +196,15 @@ def get_upcoming_trips_for_stops(stops: list) -> list:
         arrival_minutes = time_string_to_minutes(arrival_time)
         
         # Check if trip is upcoming (handle day rollover)
-        if arrival_minutes > current_minutes or (arrival_minutes < 360 and current_minutes > 1320):  # Handle late night/early morning
+        if arrival_minutes > current_minutes or (
+            arrival_minutes < 360 and current_minutes > 1320
+        ):
             upcoming_trips.append(stop)
     
     # Sort by arrival time and limit to 5
-    upcoming_trips.sort(key=lambda x: time_string_to_minutes(x.get('arrival', '00:00')))
+    upcoming_trips.sort(key=lambda x: time_string_to_minutes(x.get("arrival", "00:00")))
     return upcoming_trips[:5]
+
 DAY_MAPPING = {
     "Monday": 0,
     "Tuesday": 1,
@@ -243,8 +261,8 @@ def run_model_prediction(prediction_request: dict) -> dict:
         "predicted_eta_time": predicted_eta_time,
         "predicted_delay": float(predicted_delay),
         "model_version": "v1.0",
-        "model_used": model_type,         # 👈 Added field
-        "features_expected": n_features   # 👈 Added field
+        "model_used": model_type,        
+        "features_expected": n_features  
     }
 
 async def make_eta_prediction(trip_data: dict) -> dict:
@@ -269,7 +287,7 @@ async def make_eta_prediction(trip_data: dict) -> dict:
             "time_of_day": time_of_day
         }
         
-        # ✅ Direct model call instead of HTTP
+        #  Direct model call instead of HTTP
         prediction_result = run_model_prediction(prediction_request)
         
         # Combine original trip data with prediction
@@ -313,22 +331,29 @@ async def make_eta_prediction(trip_data: dict) -> dict:
 
 
 # Your main endpoint
-import re
 
 @app.get("/api/upcoming_trips/{stop_name}")
 async def get_upcoming_trips(stop_name: str):
     """
     Get upcoming bus trips with ETA predictions for a given stop.
-    stop_name will be like 'r42_s3' → route_42/stops/stop_3
+    stop_name like 'r44a_s13' → route_44-A/stops/stop_13
     """
     try:
-        # 🔹 Parse "r42_s3" → route_id="route_42", stop_id="stop_3"
-        match = re.match(r"r(\d+)_s(\d+)", stop_name.lower())
+        # 🔹 Parse stop name
+        match = re.match(r"r([a-z0-9\-]+)_s([a-z0-9]+)", stop_name.lower())
         if not match:
             raise HTTPException(status_code=400, detail="Invalid stop format. Use rXX_sYY")
 
-        route_id = f"route_{match.group(1)}"
-        stop_id = f"stop_{match.group(2)}"
+        raw_route = match.group(1)   # e.g. "44a" or "44-a"
+        stop_num = match.group(2)    # e.g. "13"
+
+        # 🔹 Convert to Firestore format
+        #   - Insert hyphen before trailing letters
+        #   - Keep uppercase letters (for Firestore consistency)
+        route_id = re.sub(r"(\d+)([a-z])$", r"\1-\2", raw_route, flags=re.IGNORECASE)
+        route_id = f"route_{route_id.upper()}"  # Firestore uses uppercase suffix
+        stop_id = f"stop_{stop_num}"
+
         print(f"🔎 Parsed stop_name='{stop_name}' → route_id='{route_id}', stop_id='{stop_id}'")
 
         # 🔹 Fetch stop doc directly

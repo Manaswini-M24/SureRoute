@@ -2,9 +2,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 import re
-# -----------------------------
-# Firebase Initialization
-# -----------------------------
+
 cred_path = os.environ.get("FIREBASE_PATH", "serviceAccountKey.json")
 
 if not firebase_admin._apps:  # Prevent re-init error
@@ -13,10 +11,6 @@ if not firebase_admin._apps:  # Prevent re-init error
 
 db = firestore.client()
 
-
-# -----------------------------
-# Helper: Get all routes
-# -----------------------------
 def get_routes():
     """
     Fetches all routes from 'mangaluru_buses'.
@@ -37,10 +31,6 @@ def get_routes():
 
     return routes
 
-
-# -----------------------------
-# Helper: Get stops for a route
-# -----------------------------
 def get_stops_for_route(route_id: str):
     """
     Fetches stops under a specific route.
@@ -61,9 +51,6 @@ def get_stops_for_route(route_id: str):
     return stops
 
 
-# -----------------------------
-# Helper: Get stop across routes
-# -----------------------------
 def get_stop_across_routes_by_name(stop_name: str):
     """
     Finds all occurrences of a stop across routes using the stop name.
@@ -90,39 +77,3 @@ def get_stop_across_routes_by_name(stop_name: str):
     except Exception as e:
         print(f"❌ Error in get_stop_across_routes_by_name for '{stop_name}': {e}")
         return []
-
-# def normalize_stop_id(stop_id: str, existing_doc_ids: list[str]) -> str | None:
-#     # extract trailing number (from r22_s15 → 15)
-#     m = re.search(r"(\d+)$", stop_id)
-#     if not m:
-#         return None
-#     num = m.group(1)
-#     candidate = f"stop_{num}"
-
-#     if candidate in existing_doc_ids:
-#         return candidate
-#     return None
-
-# def update_stop_status(driver_uid: str, route_id: str, stop_id: str, status: str, timestamp: str, reason: str = None):
-#     stops_coll = db.collection("route_data").document(route_id).collection("stops")
-
-#     # list all docs first
-#     existing_ids = [doc.id for doc in stops_coll.stream()]
-
-#     # normalize given stop_id to match existing doc ids
-#     normalized_id = normalize_stop_id(stop_id, existing_ids)
-#     if not normalized_id:
-#         raise ValueError(f"No matching stop doc found for '{stop_id}' in route '{route_id}'. Existing: {existing_ids}")
-
-#     stop_ref = stops_coll.document(normalized_id)
-
-#     update_data = {
-#         "status": status,
-#         "last_updated_by": driver_uid,
-#         "last_updated": timestamp
-#     }
-#     if reason:
-#         update_data["reason"] = reason
-
-#     stop_ref.update(update_data)
-#     return {"ok": True, "updated_doc": normalized_id}

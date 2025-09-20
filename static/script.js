@@ -1,17 +1,7 @@
-// SureRoute Application Logic
-
-// Global state
 let currentPage = 'landing';
 let currentStops = [];
 let currentStopIndex = 0;
-// let driverStatus = 'on-time';
-// let passengerStatus = 'on-time';
-// let driverEta = '2 minutes to next stop';
-// let passengerEta = '5 minutes';
 
-// let activityLog = [ 
-//   { id: 1, timestamp: new Date(), action: 'Route started', type: 'driver' }
-// ];
 const departedBtn = document.getElementById("departed-btn");
 const delayReasonSelect = document.getElementById("delay-reason-select");
 const delayFlagBtn = document.getElementById("delay-flag-btn");
@@ -58,18 +48,11 @@ function initApp() {
   renderDriverStops();
   event.preventDefault();
   loadSignupRoutes();
-  // Add other new functions if needed
-  // renderLandingPage();
-  // setupEventListeners();
-  // etc.
+  
 }
 
 // Run after DOM is loaded
 document.addEventListener("DOMContentLoaded", initApp);
-
-// ---------------------------
-// Driver Account Modal Logic
-// ---------------------------
 
 function openAccountModal() {
   document.getElementById('account-modal').classList.remove('hidden');
@@ -100,8 +83,7 @@ function switchTab(tab) {
   }
 }
 
-// ✅ Login
-// LOGIN FORM CODE (login.js or in your login page)
+// LOGIN FORM CODE 
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.target;
@@ -184,8 +166,6 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
   }
 });
 
-// ✅ Handle signup
-// ✅ Signup
 
 document.getElementById("signup-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -307,12 +287,8 @@ function showToast(title, description, type = 'info') {
     toast.remove();
   }, 3000);
 }
-// DRIVER PORTAL FUNCTIONALITY
 
-// 🔹 Function to fetch and render stops for the driver's route
-
-
-// ===== FETCH AND RENDER STOPS =====
+// FETCH AND RENDER STOPS 
 async function renderDriverStops() {
   const tripsDiv = document.getElementById("driver-trip-list");
   if (!tripsDiv) return;
@@ -353,7 +329,7 @@ async function renderDriverStops() {
   }
 }
 
-// ===== UPDATE STOPS UI =====
+// UPDATE STOPS UI 
 function updateStopsView() {
   const ul = document.querySelector("#driver-trip-list ul");
   if (!ul) return;
@@ -376,7 +352,7 @@ function updateStopsView() {
   if (delayReasonSelect) delayReasonSelect.value = "";
 }
 
-// ===== MARK STOP DEPARTED =====
+// MARK STOP DEPARTED 
 async function sendStopStatus(stop, status, reason = null) {
   const routeId = localStorage.getItem("selectedRouteId");
   const driverUid = localStorage.getItem("driverUid"); // or wherever you store UID
@@ -405,7 +381,7 @@ async function sendStopStatus(stop, status, reason = null) {
   }
 }
 
-// ===== Mark Departed =====
+// Mark Departed 
 departedBtn.addEventListener("click", async () => {
   if (currentStops.length === 0 || currentStopIndex >= currentStops.length) return;
 
@@ -424,7 +400,7 @@ departedBtn.addEventListener("click", async () => {
   } catch { /* already logged */ }
 });
 
-// ===== Flag Delay =====
+// Flag Delay 
 delayFlagBtn.addEventListener("click", async () => {
   const reason = delayReasonSelect.value;
   if (!reason) {
@@ -441,14 +417,12 @@ delayFlagBtn.addEventListener("click", async () => {
   } catch { /* already logged */ }
 });
 
-// ===== SHOW DRIVER PAGE =====
+// SHOW DRIVER PAGE 
 function showDriverPage() {
   document.getElementById("driver-page").classList.remove("hidden");
   renderDriverStops();
 }
 
-
-// PASSENGER PORTAL FUNCTIONALITY
 
 // Show specific subpage in the passenger portal
 function showPassengerSubPage(page) {

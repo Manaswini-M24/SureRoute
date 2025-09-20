@@ -1,17 +1,3 @@
-// // ---- Firebase Config ----
-// const firebaseConfig = {
-//   apiKey: "AIzaSyCwhbI3PxOT6xN-KejyiuC2GrpBhkmEC8o",
-//   authDomain: "driver-login-portal.firebaseapp.com",
-//   projectId: "driver-login-portal",
-//   storageBucket: "driver-login-portal.firebasestorage.app",
-//   messagingSenderId: "54907190318",
-//   appId: "1:54907190318:web:5c063f644c1e6fa876b3bf"
-// };
-
-// // Init Firebase
-// firebase.initializeApp(firebaseConfig);
-// const db = firebase.firestore();
-
 // ---- Initialize Leaflet Map ----
 const map = L.map('map').setView([12.9716, 77.5946], 13);
 

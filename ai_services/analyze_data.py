@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 def analyze_data():
-    print("📊 ANALYZING YOUR TRAINING DATA...")
+    print(" ANALYZING YOUR TRAINING DATA...")
     print("=" * 50)
     
     try:

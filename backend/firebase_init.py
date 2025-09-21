@@ -1,15 +1,21 @@
 import os
+import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-import re
 
-cred_path = os.environ.get("FIREBASE_PATH", "serviceAccountKey.json")
+# Load Firebase credentials from environment variable
+firebase_json = os.getenv("FIREBASE_KEY_JSON")  # store JSON content in env var
+if not firebase_json:
+    raise ValueError("FIREBASE_KEY_JSON env variable not set!")
+
+cred_dict = json.loads(firebase_json)  # convert JSON string to dict
 
 if not firebase_admin._apps:  # Prevent re-init error
-    cred = credentials.Certificate(cred_path)
+    cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
 
 def get_routes():
     """

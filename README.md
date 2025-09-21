@@ -4,7 +4,12 @@
 SureRoute helps bus commuters reduce uncertainty by providing real-time information on bus routes, stops, and AI-predicted arrival times.
 
 ---
-
+#Deployment link
+**https://sureroute.onrender.com**
+---
+#Demo video
+**https://drive.google.com/drive/folders/1itvHw-ByOe89FnepSaRePnl11gZXPK5Q?usp=drive_link**
+---
 ## Features
 
 - **Passenger Portal** – Find upcoming buses and report issues easily.  

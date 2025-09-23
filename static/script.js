@@ -221,7 +221,7 @@ document.getElementById("signup-form").addEventListener("submit", async (event) 
 // Load bus routes into signup dropdown
 async function loadSignupRoutes() {
   try {
-    const response = await fetch("http://localhost:8000/routes");
+    const response = await fetch("/routes");   // ✅ relative path
     const routes = await response.json();
 
     const select = document.getElementById("bus_route");
@@ -231,7 +231,7 @@ async function loadSignupRoutes() {
 
     routes.forEach(route => {
       const option = document.createElement("option");
-      option.value = route.route_id;      // store the document ID
+      option.value = route.route_id;
       option.textContent = `${route.route_no} → ${route.destination}`;
       select.appendChild(option);
     });
@@ -239,6 +239,7 @@ async function loadSignupRoutes() {
     console.error("Error loading signup routes:", error);
   }
 }
+
 
 // Call this when signup page loads
 document.addEventListener("DOMContentLoaded", loadSignupRoutes);
@@ -440,7 +441,7 @@ function showPassengerSubPage(page) {
 // Populate routes on page load
 async function loadRoutes() {
   try {
-    const response = await fetch("http://localhost:8000/routes"); 
+    const response = await fetch("/routes");  // ✅ relative path
     const routes = await response.json();
 
     const select = document.getElementById("find-route-select");
@@ -468,7 +469,7 @@ async function populateFindStops() {
   if (!routeId) return; // no route selected
 
   try {
-    const response = await fetch(`http://localhost:8000/stops/${routeId}`);
+    const response = await fetch(`/stops/${routeId}`);  // ✅ relative path
     const stops = await response.json();
 
     stops.forEach(stop => {
@@ -481,6 +482,7 @@ async function populateFindStops() {
     console.error("Error loading stops:", error);
   }
 }
+
 
 // Init on page load
 document.addEventListener("DOMContentLoaded", () => {
@@ -495,13 +497,11 @@ async function populateReportStops() {
 
   const routeId = routeSelect.value;
 
-  // Reset stops dropdown
   stopSelect.innerHTML = '<option value="">--Choose Stop--</option>';
-
-  if (!routeId) return; // no route selected
+  if (!routeId) return;
 
   try {
-    const response = await fetch(`http://localhost:8000/stops/${routeId}`);
+    const response = await fetch(`/stops/${routeId}`);  // ✅ relative path
     const stops = await response.json();
 
     stops.forEach(stop => {
@@ -515,10 +515,11 @@ async function populateReportStops() {
   }
 }
 
+
 // Populate report routes on page load
 async function loadReportRoutes() {
   try {
-    const response = await fetch("http://localhost:8000/routes");
+    const response = await fetch("/routes");  // ✅ relative path
     const routes = await response.json();
 
     const routeSelect = document.getElementById("report-route-select");
@@ -534,6 +535,7 @@ async function loadReportRoutes() {
     console.error("Error loading report routes:", error);
   }
 }
+
 
 // Initialize report page 
 document.addEventListener("DOMContentLoaded", () => {
